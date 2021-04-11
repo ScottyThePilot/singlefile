@@ -1,0 +1,21 @@
+[package]
+name = "singlefile"
+version = "0.1.0"
+authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = "1.0"
+serde_multi = { git = "https://github.com/ScottyThePilot/serde_multi" }
+fs2 = "0.4"
+
+[features]
+default = ["assert-file-unlocks"]
+format-bincode = ["serde_multi/bincode"]
+format-cbor = ["serde_multi/cbor"]
+format-json = ["serde_multi/json"]
+format-messagepack = ["serde_multi/messagepack"]
+format-ron = ["serde_multi/ron"]
+format-toml = ["serde_multi/toml"]
+format-xml = ["serde_multi/xml"]
+assert-file-unlocks = []
