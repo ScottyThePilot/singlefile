@@ -15,6 +15,8 @@ impl fmt::Display for Error {
   }
 }
 
+impl std::error::Error for Error {}
+
 impl From<serde_multi::Error> for Error {
   fn from(error: serde_multi::Error) -> Error {
     Error::Format(error)
