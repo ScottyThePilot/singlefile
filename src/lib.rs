@@ -5,6 +5,7 @@ extern crate fs2;
 mod error;
 pub mod manager;
 
+use serde::{Serialize, Deserialize};
 use serde_multi::traits::SerdeStream;
 
 pub use crate::error::Error;
@@ -58,7 +59,7 @@ impl<T> Container<T, ()> {
 }
 
 impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
-where Format: SerdeStream, Lock: AnyLock, Mode: AnyMode<Format> {
+where Format: SerdeStream, Lock: AnyLock, Mode: AnyMode<Format>, for<'de> T: Serialize + Deserialize<'de> {
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
   where Mode: Reading<T> {
     let manager = FileManager::open(path, format)?;
@@ -67,19 +68,19 @@ where Format: SerdeStream, Lock: AnyLock, Mode: AnyMode<Format> {
   }
 
   pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error>
-  where Mode: Reading<T> + Writing<T> {
+  where Mode: Reading<T>, Format: Clone,  {
     let (item, manager) = FileManager::create_or_else(path, format, || item)?;
     Ok(Container { item, manager })
   }
 
   pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error>
-  where Mode: Reading<T> + Writing<T>, C: FnOnce() -> T {
+  where Mode: Reading<T>, Format: Clone, C: FnOnce() -> T {
     let (item, manager) = FileManager::create_or_else(path, format, closure)?;
     Ok(Container { item, manager })
   }
 
   pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
-  where T: Default, Mode: Reading<T> + Writing<T> {
+  where Mode: Reading<T>, Format: Clone, T: Default {
     let (item, manager) = FileManager::create_or_else(path, format, || Default::default())?;
     Ok(Container { item, manager })
   }

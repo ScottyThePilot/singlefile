@@ -1,6 +1,7 @@
 pub mod lock;
 pub mod mode;
 
+use serde::{Serialize, Deserialize};
 use serde_multi::traits::SerdeStream;
 
 use crate::error::Error;
@@ -39,12 +40,12 @@ where Format: SerdeStream, Lock: AnyLock, Mode: AnyMode<Format> {
   }
 
   pub(crate) fn create_or_else<P: AsRef<Path>, T, C>(path: P, format: Format, closure: C) -> Result<(T, Self), Error>
-  where Mode: Reading<T> + Writing<T>, C: FnOnce() -> T {
+  where Format: Clone, for<'de> T: Serialize + Deserialize<'de>, C: FnOnce() -> T {
     let path = path.as_ref().to_owned();
-    let mode = Mode::new(format);
-    let item = read_or_write(&path, &mode, closure)?;
+    let item = read_or_write(&path, format.clone(), closure)?;
     let lock = Lock::new(&path)?;
-    Ok((item, FileManager { path, format: PhantomData, mode, lock }))
+    let manager = FileManager { path, format: PhantomData, mode: Mode::new(format), lock };
+    Ok((item, manager))
   }
 }
 
@@ -83,9 +84,10 @@ pub type ManagerWritable<Format> = FileManager<Format, NoLock, Writable<Format>>
 pub type ManagerReadonlyLocked<Format> = FileManager<Format, SharedLock, Readonly<Format>>;
 pub type ManagerWritableLocked<Format> = FileManager<Format, ExclusiveLock, Writable<Format>>;
 
-fn read_or_write<Mode, T, C>(path: &Path, mode: &Mode, closure: C) -> Result<T, Error>
-where Mode: Writing<T> + Reading<T>, C: FnOnce() -> T {
+fn read_or_write<Format, T, C>(path: &Path, format: Format, closure: C) -> Result<T, Error>
+where Format: SerdeStream, for<'de> T: Serialize + Deserialize<'de>, C: FnOnce() -> T {
   use std::io::ErrorKind::NotFound;
+  let mode = Writable::new(format);
   match File::open(&path) {
     Ok(file) => mode.read(&file),
     Err(err) if err.kind() == NotFound => {
