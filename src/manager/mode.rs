@@ -3,28 +3,39 @@ use serde_multi::traits::SerdeStream;
 
 use crate::error::Error;
 
-use std::fs::File;
+use std::fs::{File, OpenOptions};
+use std::path::Path;
+use std::io;
 
-pub trait AnyMode<Format> {
-  fn new(format: Format) -> Self where Self: Sized;
+
+
+/// Describes a mode by which a `FileManager` can manipulate a file.
+pub trait FileMode<Format>: From<Format> {
+  /// Open a file according to this mode, returning an error if it does not exist.
+  fn open(path: &Path) -> io::Result<File>;
 }
 
-pub trait Reading<T> {
+/// Extends `FileMode`, adding the ability to read from files.
+pub trait Reading<T, Format>: FileMode<Format> {
   fn read(&self, file: &File) -> Result<T, Error>;
 }
 
-pub trait Writing<T> {
+/// Extends `FileMode`, adding the ability to write to files.
+pub trait Writing<T, Format>: FileMode<Format> {
   fn write(&self, file: &File, value: &T) -> Result<(), Error>;
 }
 
+
+
+/// A file mode that only allows reading from files.
+#[derive(Debug, Clone)]
 pub struct Readonly<Format> {
   format: Format
 }
 
-impl<Format> Readonly<Format>
-where Format: SerdeStream {
+impl<Format> From<Format> for Readonly<Format> {
   #[inline]
-  fn new(format: Format) -> Self {
+  fn from(format: Format) -> Readonly<Format> {
     Readonly { format }
   }
 }
@@ -37,7 +48,7 @@ where Format: Default + SerdeStream {
   }
 }
 
-impl<T, Format> Reading<T> for Readonly<Format>
+impl<T, Format> Reading<T, Format> for Readonly<Format>
 where for<'de> T: Deserialize<'de>, Format: SerdeStream {
   #[inline]
   fn read(&self, file: &File) -> Result<T, Error> {
@@ -45,22 +56,24 @@ where for<'de> T: Deserialize<'de>, Format: SerdeStream {
   }
 }
 
-impl<Format> AnyMode<Format> for Readonly<Format>
-where Format: SerdeStream {
+impl<Format> FileMode<Format> for Readonly<Format> {
   #[inline]
-  fn new(format: Format) -> Self {
-    Readonly::new(format)
+  fn open(path: &Path) -> io::Result<File> {
+    OpenOptions::new().read(true).open(path)
   }
 }
 
+
+
+/// A file mode that allows reading and writing to files.
+#[derive(Debug, Clone)]
 pub struct Writable<Format> {
   format: Format
 }
 
-impl<Format> Writable<Format>
-where Format: SerdeStream {
+impl<Format> From<Format> for Writable<Format> {
   #[inline]
-  fn new(format: Format) -> Self {
+  fn from(format: Format) -> Writable<Format> {
     Writable { format }
   }
 }
@@ -73,28 +86,41 @@ where Format: Default + SerdeStream {
   }
 }
 
-impl<T, Format> Reading<T> for Writable<Format>
+impl<T, Format> Reading<T, Format> for Writable<Format>
 where for<'de> T: Deserialize<'de>, Format: SerdeStream {
   #[inline]
   fn read(&self, file: &File) -> Result<T, Error> {
-    self.format.from_reader(file).map_err(From::from)
+    read(&self.format, file)
   }
 }
 
-impl<T, Format> Writing<T> for Writable<Format>
+impl<T, Format> Writing<T, Format> for Writable<Format>
 where T: Serialize, Format: SerdeStream {
   #[inline]
   fn write(&self, file: &File, value: &T) -> Result<(), Error> {
-    self.format.to_writer_pretty(file, value)?;
-    file.sync_all()?;
-    Ok(())
+    write(&self.format, file, value)
   }
 }
 
-impl<Format> AnyMode<Format> for Writable<Format>
-where Format: SerdeStream {
+impl<Format> FileMode<Format> for Writable<Format> {
   #[inline]
-  fn new(format: Format) -> Self {
-    Writable::new(format)
+  fn open(path: &Path) -> io::Result<File> {
+    OpenOptions::new().read(true).write(true).open(path)
   }
+}
+
+
+
+#[inline]
+pub(crate) fn read<T, Format>(format: &Format, file: &File) -> Result<T, Error>
+where for<'de> T: Deserialize<'de>, Format: SerdeStream {
+  format.from_reader(file).map_err(From::from)
+}
+
+#[inline]
+pub(crate) fn write<T, Format>(format: &Format, file: &File, value: &T) -> Result<(), Error>
+where T: Serialize, Format: SerdeStream {
+  format.to_writer_pretty(file, value)?;
+  file.sync_all()?;
+  Ok(())
 }
