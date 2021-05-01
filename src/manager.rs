@@ -1,5 +1,3 @@
-
-
 pub mod lock;
 pub mod mode;
 
@@ -63,13 +61,9 @@ impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
 where Lock: FileLock {
   /// Unlocks and closes this `FileManager`.
   pub fn close(self) -> Result<(), Error> {
-    Lock::unlock(&self.file).map_err(From::from)
-  }
-
-  /// Unlocks and converts this `FileManager` into its underlying `File`.
-  pub fn into_file(self) -> Result<File, Error> {
     Lock::unlock(&self.file)?;
-    Ok(self.file)
+    self.file.sync_all()?;
+    Ok(())
   }
 }
 

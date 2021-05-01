@@ -4,8 +4,8 @@ use serde_multi::traits::SerdeStream;
 use crate::error::Error;
 
 use std::fs::{File, OpenOptions};
+use std::io::{self, Seek, SeekFrom};
 use std::path::Path;
-use std::io;
 
 
 
@@ -34,7 +34,7 @@ pub struct Readonly<Format> {
 }
 
 impl<Format> From<Format> for Readonly<Format> {
-  #[inline]
+  #[inline(always)]
   fn from(format: Format) -> Readonly<Format> {
     Readonly { format }
   }
@@ -52,7 +52,7 @@ impl<T, Format> Reading<T, Format> for Readonly<Format>
 where for<'de> T: Deserialize<'de>, Format: SerdeStream {
   #[inline]
   fn read(&self, file: &File) -> Result<T, Error> {
-    self.format.from_reader(file).map_err(From::from)
+    read(&self.format, file)
   }
 }
 
@@ -72,7 +72,7 @@ pub struct Writable<Format> {
 }
 
 impl<Format> From<Format> for Writable<Format> {
-  #[inline]
+  #[inline(always)]
   fn from(format: Format) -> Writable<Format> {
     Writable { format }
   }
@@ -111,16 +111,18 @@ impl<Format> FileMode<Format> for Writable<Format> {
 
 
 
-#[inline]
-pub(crate) fn read<T, Format>(format: &Format, file: &File) -> Result<T, Error>
+pub(crate) fn read<T, Format>(format: &Format, mut file: &File) -> Result<T, Error>
 where for<'de> T: Deserialize<'de>, Format: SerdeStream {
-  format.from_reader(file).map_err(From::from)
+  let item = format.from_reader(file)?;
+  file.seek(SeekFrom::Start(0))?;
+  Ok(item)
 }
 
-#[inline]
-pub(crate) fn write<T, Format>(format: &Format, file: &File, value: &T) -> Result<(), Error>
+pub(crate) fn write<T, Format>(format: &Format, mut file: &File, value: &T) -> Result<(), Error>
 where T: Serialize, Format: SerdeStream {
+  file.set_len(0)?;
   format.to_writer_pretty(file, value)?;
+  file.seek(SeekFrom::Start(0))?;
   file.sync_all()?;
   Ok(())
 }

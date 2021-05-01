@@ -17,12 +17,12 @@ pub trait FileLock {
 pub struct NoLock;
 
 impl FileLock for NoLock {
-  #[inline]
+  #[inline(always)]
   fn lock(_: &File) -> io::Result<()> {
     Ok(())
   }
 
-  #[inline]
+  #[inline(always)]
   fn unlock(_: &File) -> io::Result<()> {
     Ok(())
   }
@@ -35,12 +35,12 @@ impl FileLock for NoLock {
 pub struct SharedLock;
 
 impl FileLock for SharedLock {
-  #[inline]
+  #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
     fs2::FileExt::try_lock_shared(file)
   }
 
-  #[inline]
+  #[inline(always)]
   fn unlock(file: &File) -> io::Result<()> {
     fs2::FileExt::unlock(file)
   }
@@ -53,12 +53,12 @@ impl FileLock for SharedLock {
 pub struct ExclusiveLock;
 
 impl FileLock for ExclusiveLock {
-  #[inline]
+  #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
     fs2::FileExt::try_lock_exclusive(file)
   }
 
-  #[inline]
+  #[inline(always)]
   fn unlock(file: &File) -> io::Result<()> {
     fs2::FileExt::unlock(file)
   }

@@ -44,29 +44,29 @@ pub type BackendReadonlyLocked<T, Format> = Container<T, ManagerReadonlyLocked<F
 pub type BackendWritableLocked<T, Format> = Container<T, ManagerWritableLocked<Format>>;
 
 impl<T, Manager> Container<T, Manager> {
-  #[inline]
+  #[inline(always)]
   pub fn into_inner(self) -> T {
     self.item
   }
 
-  #[inline]
+  #[inline(always)]
   pub fn manager(&self) -> &Manager {
     &self.manager
   }
 
-  #[inline]
+  #[inline(always)]
   pub fn borrow(&self) -> &T {
     &self.item
   }
 
-  #[inline]
+  #[inline(always)]
   pub fn borrow_mut(&mut self) -> &mut T {
     &mut self.item
   }
 }
 
 impl<T> Container<T, ()> {
-  #[inline]
+  #[inline(always)]
   pub fn new(item: T) -> Self {
     Container { item, manager: () }
   }
@@ -129,14 +129,14 @@ where Format: SerdeStream {
 impl<T, Manager> Deref for Container<T, Manager> {
   type Target = T;
 
-  #[inline]
+  #[inline(always)]
   fn deref(&self) -> &T {
     self.borrow()
   }
 }
 
 impl<T, Manager> DerefMut for Container<T, Manager> {
-  #[inline]
+  #[inline(always)]
   fn deref_mut(&mut self) -> &mut T {
     self.borrow_mut()
   }
