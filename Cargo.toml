@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 serde = "1.0"
-serde_multi = { git = "https://github.com/ScottyThePilot/serde_multi" }
+serde_multi = "0.1"
 fs2 = "0.4"
 
 [features]
