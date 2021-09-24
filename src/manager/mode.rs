@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
-use serde_multi::traits::SerdeStream;
 
 use crate::error::Error;
+use crate::manager::format::FileFormat;
 
 use std::fs::{File, OpenOptions};
 use std::io::{self, Seek, SeekFrom};
@@ -41,7 +41,7 @@ impl<Format> From<Format> for Readonly<Format> {
 }
 
 impl<Format> Default for Readonly<Format>
-where Format: Default + SerdeStream {
+where Format: Default + FileFormat {
   #[inline]
   fn default() -> Self {
     Readonly { format: Format::default() }
@@ -49,7 +49,7 @@ where Format: Default + SerdeStream {
 }
 
 impl<T, Format> Reading<T, Format> for Readonly<Format>
-where for<'de> T: Deserialize<'de>, Format: SerdeStream {
+where for<'de> T: Deserialize<'de>, Format: FileFormat {
   #[inline]
   fn read(&self, file: &File) -> Result<T, Error> {
     read(&self.format, file)
@@ -79,7 +79,7 @@ impl<Format> From<Format> for Writable<Format> {
 }
 
 impl<Format> Default for Writable<Format>
-where Format: Default + SerdeStream {
+where Format: Default + FileFormat {
   #[inline]
   fn default() -> Self {
     Writable { format: Format::default() }
@@ -87,7 +87,7 @@ where Format: Default + SerdeStream {
 }
 
 impl<T, Format> Reading<T, Format> for Writable<Format>
-where for<'de> T: Deserialize<'de>, Format: SerdeStream {
+where for<'de> T: Deserialize<'de>, Format: FileFormat {
   #[inline]
   fn read(&self, file: &File) -> Result<T, Error> {
     read(&self.format, file)
@@ -95,7 +95,7 @@ where for<'de> T: Deserialize<'de>, Format: SerdeStream {
 }
 
 impl<T, Format> Writing<T, Format> for Writable<Format>
-where T: Serialize, Format: SerdeStream {
+where T: Serialize, Format: FileFormat {
   #[inline]
   fn write(&self, file: &File, value: &T) -> Result<(), Error> {
     write(&self.format, file, value)
@@ -112,16 +112,16 @@ impl<Format> FileMode<Format> for Writable<Format> {
 
 
 pub(crate) fn read<T, Format>(format: &Format, mut file: &File) -> Result<T, Error>
-where for<'de> T: Deserialize<'de>, Format: SerdeStream {
+where for<'de> T: Deserialize<'de>, Format: FileFormat {
   let item = format.from_reader(file)?;
   file.seek(SeekFrom::Start(0))?;
   Ok(item)
 }
 
 pub(crate) fn write<T, Format>(format: &Format, mut file: &File, value: &T) -> Result<(), Error>
-where T: Serialize, Format: SerdeStream {
+where T: Serialize, Format: FileFormat {
   file.set_len(0)?;
-  format.to_writer_pretty(file, value)?;
+  format.to_writer(file, value)?;
   file.seek(SeekFrom::Start(0))?;
   file.sync_all()?;
   Ok(())

@@ -1,33 +1,45 @@
 use std::fmt;
 
+pub use crate::manager::format::FormatError;
+
 #[derive(Debug)]
 pub enum Error {
-  Format(serde_multi::Error),
+  /// An error caused by an implementation of [`FileFormat`].
+  ///
+  /// [`FileFormat`]: crate::manager::format::FileFormat
+  Format(FormatError),
+  /// An error caused by the filesystem.
   Io(std::io::Error)
 }
 
-impl fmt::Display for Error {
-  #[inline]
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl std::error::Error for Error {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
-      Error::Format(error) => write!(f, "{}", error),
-      Error::Io(error) => write!(f, "{}", error)
+      Error::Format(err) => Some(&**err),
+      Error::Io(err) => err.source()
     }
   }
 }
 
-impl std::error::Error for Error {}
+impl fmt::Display for Error {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self {
+      Error::Format(err) => write!(f, "format error: {}", err),
+      Error::Io(err) => write!(f, "{}", err)
+    }
+  }
+}
 
-impl From<serde_multi::Error> for Error {
+impl From<FormatError> for Error {
   #[inline]
-  fn from(error: serde_multi::Error) -> Error {
-    Error::Format(error)
+  fn from(source: FormatError) -> Self {
+    Error::Format(source)
   }
 }
 
 impl From<std::io::Error> for Error {
   #[inline]
-  fn from(error: std::io::Error) -> Error {
-    Error::Io(error)
+  fn from(source: std::io::Error) -> Self {
+    Error::Io(source)
   }
 }
