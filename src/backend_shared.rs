@@ -141,33 +141,36 @@ where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format>, for<'de> T: Se
   /// Opens a new [`ContainerSharedMutable`], returning an error if the file at the given path does not exist.
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
   where Mode: Reading<T, Format> {
-    let manager = FileManager::open(path, format)?;
-    let item = RwLock::new(manager.read()?);
-    let ptr = Arc::new(Container { item, manager });
-    Ok(ContainerSharedMutable { ptr })
+    let container = Container::<T, _>::open(path, format)?;
+    Ok(ContainerSharedMutable {
+      ptr: Arc::new(container.transform(RwLock::new))
+    })
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the given value to the file if it does not exist.
   pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error> {
-    let (item, manager) = FileManager::create_or(path, format, item)?;
-    let ptr = Arc::new(Container { item: RwLock::new(item), manager });
-    Ok(ContainerSharedMutable { ptr })
+    let container = Container::<T, _>::create_or(path, format, item)?;
+    Ok(ContainerSharedMutable {
+      ptr: Arc::new(container.transform(RwLock::new))
+    })
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the result of the given closure to the file if it does not exist.
   pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error>
   where C: FnOnce() -> T {
-    let (item, manager) = FileManager::create_or_else(path, format, closure)?;
-    let ptr = Arc::new(Container { item: RwLock::new(item), manager });
-    Ok(ContainerSharedMutable { ptr })
+    let container = Container::<T, _>::create_or_else(path, format, closure)?;
+    Ok(ContainerSharedMutable {
+      ptr: Arc::new(container.transform(RwLock::new))
+    })
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the default value of `T` to the file if it does not exist.
   pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
   where T: Default {
-    let (item, manager) = FileManager::create_or_default(path, format)?;
-    let ptr = Arc::new(Container { item: RwLock::new(item), manager });
-    Ok(ContainerSharedMutable { ptr })
+    let container = Container::<T, _>::create_or_default(path, format)?;
+    Ok(ContainerSharedMutable {
+      ptr: Arc::new(container.transform(RwLock::new))
+    })
   }
 }
 

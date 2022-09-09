@@ -2,10 +2,14 @@
 //! operations on individual files that utilize serde-compatable formats.
 
 #![warn(missing_debug_implementations)]
-extern crate fs2;
+extern crate fs4;
 extern crate serde;
+#[cfg(feature = "tokio")]
+extern crate tokio;
 
 pub mod backend_shared;
+#[cfg(feature = "tokio")]
+pub mod backend_tokio;
 pub mod backend;
 pub mod error;
 pub mod manager;

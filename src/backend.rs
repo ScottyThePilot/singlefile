@@ -47,6 +47,11 @@ impl<T, Manager> Container<T, Manager> {
   pub fn borrow_mut(&mut self) -> &mut T {
     &mut self.item
   }
+
+  #[inline]
+  pub(crate) fn transform<U, F>(self, f: F) -> Container<U, Manager> where F: FnOnce(T) -> U {
+    Container { item: f(self.item), manager: self.manager }
+  }
 }
 
 impl<T> Container<T, ()> {
