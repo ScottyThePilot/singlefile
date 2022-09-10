@@ -8,16 +8,16 @@ use crate::manager::*;
 use std::path::Path;
 use std::ops::{Deref, DerefMut};
 
-/// Type alias to a backend with no manager, only a value stored in memory.
-pub type BackendMemoryOnly<T> = Container<T, ()>;
-/// Type alias to a read-only, unlocked backend.
-pub type BackendReadonly<T, Format> = Container<T, ManagerReadonly<Format>>;
-/// Type alias to a readable and writable, unlocked backend.
-pub type BackendWritable<T, Format> = Container<T, ManagerWritable<Format>>;
-/// Type alias to a read-only, shared-locked backend.
-pub type BackendReadonlyLocked<T, Format> = Container<T, ManagerReadonlyLocked<Format>>;
-/// Type alias to a readable and writable, exclusively-locked backend.
-pub type BackendWritableLocked<T, Format> = Container<T, ManagerWritableLocked<Format>>;
+/// Type alias to a container with no manager, only a value stored in memory.
+pub type ContainerMemoryOnly<T> = Container<T, ()>;
+/// Type alias to a read-only, unlocked container.
+pub type ContainerReadonly<T, Format> = Container<T, ManagerReadonly<Format>>;
+/// Type alias to a readable and writable, unlocked container.
+pub type ContainerWritable<T, Format> = Container<T, ManagerWritable<Format>>;
+/// Type alias to a read-only, shared-locked container.
+pub type ContainerReadonlyLocked<T, Format> = Container<T, ManagerReadonlyLocked<Format>>;
+/// Type alias to a readable and writable, exclusively-locked container.
+pub type ContainerWritableLocked<T, Format> = Container<T, ManagerWritableLocked<Format>>;
 
 #[derive(Debug)]
 pub struct Container<T, Manager> {
@@ -50,7 +50,7 @@ impl<T, Manager> Container<T, Manager> {
 }
 
 impl<T> Container<T, ()> {
-  /// Create a new in-memory-only backend, not connected to a file.
+  /// Create a new in-memory-only container, not connected to a file.
   #[inline(always)]
   pub fn new(item: T) -> Self {
     Container { item, manager: () }

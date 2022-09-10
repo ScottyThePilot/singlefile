@@ -7,25 +7,25 @@ extern crate serde;
 #[cfg(feature = "tokio")]
 extern crate tokio;
 
-pub mod backend_shared;
+pub mod container_shared;
 #[cfg(feature = "tokio")]
-pub mod backend_tokio;
-pub mod backend;
+pub mod container_tokio;
+pub mod container;
 pub mod error;
 pub mod manager;
 
-pub use crate::backend_shared::ContainerShared;
-pub use crate::backend_shared::ContainerSharedMutable;
-pub use crate::backend_shared::BackendSharedReadonlyAtomic;
-pub use crate::backend_shared::BackendSharedWritableAtomic;
-pub use crate::backend_shared::BackendSharedReadonlyLockedAtomic;
-pub use crate::backend_shared::BackendSharedWritableLockedAtomic;
+pub use crate::container_shared::ContainerShared;
+pub use crate::container_shared::ContainerSharedMutable;
+pub use crate::container_shared::ContainerSharedReadonly;
+pub use crate::container_shared::ContainerSharedWritable;
+pub use crate::container_shared::ContainerSharedReadonlyLocked;
+pub use crate::container_shared::ContainerSharedWritableLocked;
 
-pub use crate::backend::Container;
-pub use crate::backend::BackendMemoryOnly;
-pub use crate::backend::BackendReadonly;
-pub use crate::backend::BackendWritable;
-pub use crate::backend::BackendReadonlyLocked;
-pub use crate::backend::BackendWritableLocked;
+pub use crate::container::Container;
+pub use crate::container::ContainerMemoryOnly;
+pub use crate::container::ContainerReadonly;
+pub use crate::container::ContainerWritable;
+pub use crate::container::ContainerReadonlyLocked;
+pub use crate::container::ContainerWritableLocked;
 
 pub use crate::error::Error;

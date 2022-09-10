@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 use crate::error::Error;
-use crate::backend::*;
+use crate::container::*;
 use crate::manager::lock::FileLock;
 use crate::manager::mode::FileMode;
 use crate::manager::*;
@@ -14,14 +14,14 @@ use std::sync::Arc;
 pub type AccessGuard<'a, T> = RwLockReadGuard<'a, T>;
 pub type AccessGuardMut<'a, T> = RwLockWriteGuard<'a, T>;
 
-/// Type alias to a shared, thread-safe, read-only, unlocked backend.
-pub type BackendSharedReadonlyAtomic<T, Format> = ContainerShared<T, ManagerReadonly<Format>>;
-/// Type alias to a shared, thread-safe, readable and writable, unlocked backend.
-pub type BackendSharedWritableAtomic<T, Format> = ContainerSharedMutable<T, ManagerWritable<Format>>;
-/// Type alias to a shared, thread-safe, read-only, shared-locked backend.
-pub type BackendSharedReadonlyLockedAtomic<T, Format> = ContainerShared<T, ManagerReadonlyLocked<Format>>;
-/// Type alias to a shared, thread-safe, readable and writable, exclusively-locked backend.
-pub type BackendSharedWritableLockedAtomic<T, Format> = ContainerSharedMutable<T, ManagerWritableLocked<Format>>;
+/// Type alias to a shared, thread-safe, read-only, unlocked container.
+pub type ContainerSharedReadonly<T, Format> = ContainerShared<T, ManagerReadonly<Format>>;
+/// Type alias to a shared, thread-safe, readable and writable, unlocked container.
+pub type ContainerSharedWritable<T, Format> = ContainerSharedMutable<T, ManagerWritable<Format>>;
+/// Type alias to a shared, thread-safe, read-only, shared-locked container.
+pub type ContainerSharedReadonlyLocked<T, Format> = ContainerShared<T, ManagerReadonlyLocked<Format>>;
+/// Type alias to a shared, thread-safe, readable and writable, exclusively-locked container.
+pub type ContainerSharedWritableLocked<T, Format> = ContainerSharedMutable<T, ManagerWritableLocked<Format>>;
 
 /// A container that allows atomic reference counted, immutable access to the underlying file and contents.
 /// Cloning this container will not clone the underlying contents, it will clone the underlying pointer,

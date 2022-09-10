@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 use crate::error::Error;
-use crate::backend::*;
+use crate::container::*;
 use crate::manager::lock::FileLock;
 use crate::manager::mode::FileMode;
 use crate::manager::*;
@@ -21,18 +21,18 @@ pub type AccessGuardMut<'a, T> = RwLockWriteGuard<'a, T>;
 pub type OwnedAccessGuard<T> = OwnedRwLockReadGuard<T>;
 pub type OwnedAccessGuardMut<T> = OwnedRwLockWriteGuard<T>;
 
-/// Type alias to a shared, thread-safe, read-only, unlocked backend.
-pub type BackendSharedReadonlyAtomic<T, Format> = ContainerAsync<T, ManagerReadonly<Format>>;
-/// Type alias to a shared, thread-safe, readable and writable, unlocked backend.
-pub type BackendSharedWritableAtomic<T, Format> = ContainerAsync<T, ManagerWritable<Format>>;
-/// Type alias to a shared, thread-safe, read-only, shared-locked backend.
-pub type BackendSharedReadonlyLockedAtomic<T, Format> = ContainerAsync<T, ManagerReadonlyLocked<Format>>;
-/// Type alias to a shared, thread-safe, readable and writable, exclusively-locked backend.
-pub type BackendSharedWritableLockedAtomic<T, Format> = ContainerAsync<T, ManagerWritableLocked<Format>>;
+/// Type alias to a shared, asynchronous, thread-safe, read-only, unlocked container.
+pub type ContainerAsyncReadonly<T, Format> = ContainerAsync<T, ManagerReadonly<Format>>;
+/// Type alias to a shared, asynchronous, thread-safe, readable and writable, unlocked container.
+pub type ContainerAsyncWritable<T, Format> = ContainerAsync<T, ManagerWritable<Format>>;
+/// Type alias to a shared, asynchronous, thread-safe, read-only, shared-locked container.
+pub type ContainerAsyncReadonlyLocked<T, Format> = ContainerAsync<T, ManagerReadonlyLocked<Format>>;
+/// Type alias to a shared, asynchronous, thread-safe, readable and writable, exclusively-locked container.
+pub type ContainerAsyncWritableLocked<T, Format> = ContainerAsync<T, ManagerWritableLocked<Format>>;
 
-/// A container that allows atomic reference-counted, mutable access (gated by an RwLock) to the underlying
-/// file and contents. Cloning this container will not clone the underlying contents, it will clone the
-/// underlying pointers, allowing multiple-access.
+/// A container that allows atomic reference-counted, asynchronous, mutable access (gated by an RwLock)
+/// to the underlying file and contents. Cloning this container will not clone the underlying contents,
+/// it will clone the underlying pointers, allowing multiple-access.
 #[derive(Debug)]
 pub struct ContainerAsync<T, Manager> {
   pub(crate) item: Arc<RwLock<T>>,
