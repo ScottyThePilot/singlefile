@@ -32,7 +32,7 @@ pub struct ContainerShared<T, Manager> {
   pub(crate) ptr: Arc<Container<T, Manager>>
 }
 
-impl<Manager, T> ContainerShared<T, Manager> {
+impl<T, Manager> ContainerShared<T, Manager> {
   /// Attempts to unwrap the contained state if only one reference exists, other wise it returns `Self`.
   pub fn try_into_inner(self) -> Result<T, Self> {
     match Arc::try_unwrap(self.ptr) {
@@ -61,34 +61,30 @@ impl<Manager, T> ContainerShared<T, Manager> {
 impl<T, Format, Lock, Mode> ContainerShared<T, FileManager<Format, Lock, Mode>>
 where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format>, for<'de> T: Serialize + Deserialize<'de> {
   /// Opens a new [`ContainerShared`], returning an error if the file at the given path does not exist.
+  #[inline]
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
   where Mode: Reading<T, Format> {
-    Ok(ContainerShared {
-      ptr: Arc::new(Container::open(path, format)?)
-    })
+    Container::<T, _>::open(path, format).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the given value to the file if it does not exist.
+  #[inline]
   pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error> {
-    Ok(ContainerShared {
-      ptr: Arc::new(Container::create_or(path, format, item)?)
-    })
+    Container::<T, _>::create_or(path, format, item).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the result of the given closure to the file if it does not exist.
+  #[inline]
   pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error>
   where C: FnOnce() -> T {
-    Ok(ContainerShared {
-      ptr: Arc::new(Container::create_or_else(path, format, closure)?)
-    })
+    Container::<T, _>::create_or_else(path, format, closure).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the default value of `T` to the file if it does not exist.
+  #[inline]
   pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
   where T: Default {
-    Ok(ContainerShared {
-      ptr: Arc::new(Container::create_or_default(path, format)?)
-    })
+    Container::<T, _>::create_or_default(path, format).map(From::from)
   }
 }
 
@@ -98,12 +94,19 @@ impl<T, Manager> Clone for ContainerShared<T, Manager> {
   }
 }
 
-impl<Manager, T> Deref for ContainerShared<T, Manager> {
+impl<T, Manager> Deref for ContainerShared<T, Manager> {
   type Target = T;
 
   #[inline]
   fn deref(&self) -> &T {
     self.borrow()
+  }
+}
+
+impl<T, Manager> From<Container<T, Manager>> for ContainerShared<T, Manager> {
+  #[inline]
+  fn from(container: Container<T, Manager>) -> Self {
+    ContainerShared { ptr: Arc::new(container) }
   }
 }
 
@@ -116,7 +119,7 @@ pub struct ContainerSharedMutable<T, Manager> {
   pub(crate) ptr: Arc<Container<RwLock<T>, Manager>>
 }
 
-impl<Manager, T> ContainerSharedMutable<T, Manager> {
+impl<T, Manager> ContainerSharedMutable<T, Manager> {
   // Retrieve the contained file manager.
   #[inline(always)]
   pub fn manager(&self) -> &Manager {
@@ -139,38 +142,30 @@ impl<Manager, T> ContainerSharedMutable<T, Manager> {
 impl<T, Format, Lock, Mode> ContainerSharedMutable<T, FileManager<Format, Lock, Mode>>
 where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format>, for<'de> T: Serialize + Deserialize<'de> {
   /// Opens a new [`ContainerSharedMutable`], returning an error if the file at the given path does not exist.
+  #[inline]
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
   where Mode: Reading<T, Format> {
-    let container = Container::<T, _>::open(path, format)?;
-    Ok(ContainerSharedMutable {
-      ptr: Arc::new(container.transform(RwLock::new))
-    })
+    Container::<T, _>::open(path, format).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the given value to the file if it does not exist.
+  #[inline]
   pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error> {
-    let container = Container::<T, _>::create_or(path, format, item)?;
-    Ok(ContainerSharedMutable {
-      ptr: Arc::new(container.transform(RwLock::new))
-    })
+    Container::<T, _>::create_or(path, format, item).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the result of the given closure to the file if it does not exist.
+  #[inline]
   pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error>
   where C: FnOnce() -> T {
-    let container = Container::<T, _>::create_or_else(path, format, closure)?;
-    Ok(ContainerSharedMutable {
-      ptr: Arc::new(container.transform(RwLock::new))
-    })
+    Container::<T, _>::create_or_else(path, format, closure).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the default value of `T` to the file if it does not exist.
+  #[inline]
   pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
   where T: Default {
-    let container = Container::<T, _>::create_or_default(path, format)?;
-    Ok(ContainerSharedMutable {
-      ptr: Arc::new(container.transform(RwLock::new))
-    })
+    Container::<T, _>::create_or_default(path, format).map(From::from)
   }
 }
 
@@ -203,5 +198,17 @@ impl<T, Manager> Clone for ContainerSharedMutable<T, Manager> {
   #[inline]
   fn clone(&self) -> Self {
     ContainerSharedMutable { ptr: Arc::clone(&self.ptr) }
+  }
+}
+
+impl<T, Manager> From<Container<T, Manager>> for ContainerSharedMutable<T, Manager> {
+  #[inline]
+  fn from(container: Container<T, Manager>) -> Self {
+    ContainerSharedMutable {
+      ptr: Arc::new(Container {
+        item: RwLock::new(container.item),
+        manager: container.manager
+      })
+    }
   }
 }

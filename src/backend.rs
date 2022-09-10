@@ -26,13 +26,13 @@ pub struct Container<T, Manager> {
 }
 
 impl<T, Manager> Container<T, Manager> {
-  // Retrieve the contained state.
+  /// Extract the contained state.
   #[inline(always)]
   pub fn into_inner(self) -> T {
     self.item
   }
 
-  // Retrieve the contained file manager.
+  /// Retrieve the contained file manager.
   #[inline(always)]
   pub fn manager(&self) -> &Manager {
     &self.manager
@@ -47,15 +47,10 @@ impl<T, Manager> Container<T, Manager> {
   pub fn borrow_mut(&mut self) -> &mut T {
     &mut self.item
   }
-
-  #[inline]
-  pub(crate) fn transform<U, F>(self, f: F) -> Container<U, Manager> where F: FnOnce(T) -> U {
-    Container { item: f(self.item), manager: self.manager }
-  }
 }
 
 impl<T> Container<T, ()> {
-  // Create a new in-memory-only backend, not connected to a file.
+  /// Create a new in-memory-only backend, not connected to a file.
   #[inline(always)]
   pub fn new(item: T) -> Self {
     Container { item, manager: () }
