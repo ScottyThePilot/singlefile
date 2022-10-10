@@ -7,19 +7,13 @@ extern crate serde;
 #[cfg(feature = "tokio")]
 extern crate tokio;
 
-pub mod container_shared;
-#[cfg(feature = "tokio")]
-pub mod container_tokio;
 pub mod container;
+#[cfg(feature = "shared")]
+pub mod container_shared;
+#[cfg(feature = "shared_async")]
+pub mod container_shared_async;
 pub mod error;
 pub mod manager;
-
-pub use crate::container_shared::ContainerShared;
-pub use crate::container_shared::ContainerSharedMutable;
-pub use crate::container_shared::ContainerSharedReadonly;
-pub use crate::container_shared::ContainerSharedWritable;
-pub use crate::container_shared::ContainerSharedReadonlyLocked;
-pub use crate::container_shared::ContainerSharedWritableLocked;
 
 pub use crate::container::Container;
 pub use crate::container::ContainerMemoryOnly;
@@ -29,3 +23,8 @@ pub use crate::container::ContainerReadonlyLocked;
 pub use crate::container::ContainerWritableLocked;
 
 pub use crate::error::Error;
+
+#[doc(hidden)]
+#[deprecated = "use `container_shared_async` instead"]
+#[cfg(feature = "tokio")]
+pub use crate::container_shared_async as container_tokio;

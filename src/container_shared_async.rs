@@ -78,6 +78,20 @@ impl<T, Manager> ContainerAsync<T, Manager> {
   pub async fn access_owned_mut(&self) -> OwnedAccessGuardMut<T> {
     self.item.clone().write_owned().await
   }
+
+  /// Grants the caller immutable access to the underlying value `T`,
+  /// but only for the duration of the provided function or closure.
+  pub async fn operate<F, R>(&self, operation: F) -> R
+  where F: FnOnce(&T) -> R {
+    operation(&*self.access().await)
+  }
+
+  /// Grants the caller mutable access to the underlying value `T`,
+  /// but only for the duration of the provided function or closure.
+  pub async fn operate_mut<F, R>(&self, operation: F) -> R
+  where F: FnOnce(&mut T) -> R {
+    operation(&mut *self.access_mut().await)
+  }
 }
 
 impl<T, Format, Lock, Mode> ContainerAsync<T, FileManager<Format, Lock, Mode>>
@@ -126,32 +140,57 @@ where
   Mode: Send + Sync + 'static,
   T: Send + Sync + 'static
 {
-  /// Reads a value from the managed file, replacing the current state in memory.
-  pub async fn refresh(&self) -> Result<(), Error>
-  where Mode: Reading<T, Format> {
-    let mut lock = self.item.clone().write_owned().await;
+  /// Reads a value from the managed file, replacing the current state in memory,
+  /// immediately granting the caller immutable access to that state
+  /// for the duration of the provided function or closure.
+  ///
+  /// The provided closure takes (1) a reference to the new state, and (2) the old state.
+  pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error>
+  where Mode: Reading<T, Format>, F: FnOnce(&T, T) -> R {
+    let mut guard = self.access_owned_mut().await;
     let manager = self.manager.clone();
-    spawn_blocking(move || manager.read().map(|item| *lock = item))
-      .await.unwrap()
+    let item = spawn_blocking(move || manager.read())
+      .await.expect("blocking task failed")?;
+    let old_item = std::mem::replace(&mut *guard, item);
+    Ok(operation(&guard, old_item))
+  }
+
+  /// Grants the caller mutable access to the underlying value `T`,
+  /// but only for the duration of the provided function or closure,
+  /// immediately committing any changes made.
+  pub async fn operate_mut_commit<F, R>(&self, operation: F) -> Result<R, Error>
+  where Mode: Writing<T, Format>, F: FnOnce(&mut T) -> R {
+    let mut guard = self.access_owned_mut().await;
+    let ret = operation(&mut guard);
+    self.commit_guard(guard.downgrade()).await
+      .map(|()| ret)
+  }
+
+  /// Reads a value from the managed file, replacing the current state in memory.
+  ///
+  /// Returns the value of the previous state if the operation succeeded.
+  pub async fn refresh(&self) -> Result<T, Error>
+  where Mode: Reading<T, Format> {
+    let mut guard = self.access_owned_mut().await;
+    let manager = self.manager.clone();
+    let item = spawn_blocking(move || manager.read())
+      .await.expect("blocking task failed")?;
+    let old_item = std::mem::replace(&mut *guard, item);
+    Ok(old_item)
   }
 
   /// Writes the current in-memory state to the managed file.
   pub async fn commit(&self) -> Result<(), Error>
   where Mode: Writing<T, Format> {
-    let lock = self.item.clone().read_owned().await;
-    let manager = self.manager.clone();
-    spawn_blocking(move || manager.write(&*lock))
-      .await.unwrap()
+    let guard = self.access_owned().await;
+    self.commit_guard(guard).await
   }
 
-  /// Writes a given state to the managed file, replacing the in-memory state.
-  pub async fn commit_with(&self, item: T) -> Result<(), Error>
+  async fn commit_guard(&self, guard: OwnedAccessGuard<T>) -> Result<(), Error>
   where Mode: Writing<T, Format> {
-    let mut lock = self.item.clone().write_owned().await;
-    *lock = item;
     let manager = self.manager.clone();
-    spawn_blocking(move || manager.write(&*lock))
-      .await.unwrap()
+    spawn_blocking(move || manager.write(&*guard))
+      .await.expect("blocking task failed")
   }
 }
 

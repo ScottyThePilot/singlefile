@@ -34,12 +34,12 @@ impl<T, Manager> Container<T, Manager> {
 
   /// Retrieve the contained file manager.
   #[inline(always)]
-  pub fn manager(&self) -> &Manager {
+  pub const fn manager(&self) -> &Manager {
     &self.manager
   }
 
   #[inline(always)]
-  pub fn borrow(&self) -> &T {
+  pub const fn borrow(&self) -> &T {
     &self.item
   }
 
@@ -52,7 +52,7 @@ impl<T, Manager> Container<T, Manager> {
 impl<T> Container<T, ()> {
   /// Create a new in-memory-only container, not connected to a file.
   #[inline(always)]
-  pub fn new(item: T) -> Self {
+  pub const fn new(item: T) -> Self {
     Container { item, manager: () }
   }
 }
