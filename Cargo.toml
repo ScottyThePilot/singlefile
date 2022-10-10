@@ -20,5 +20,5 @@ optional = true
 [features]
 default = []
 shared = ["dep:parking_lot"]
-shared_async = ["dep:tokio"]
-tokio = ["shared_async"] # deprecated
+shared-async = ["dep:tokio"]
+tokio = ["shared-async"] # deprecated

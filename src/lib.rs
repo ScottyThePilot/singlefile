@@ -10,7 +10,7 @@ extern crate tokio;
 pub mod container;
 #[cfg(feature = "shared")]
 pub mod container_shared;
-#[cfg(feature = "shared_async")]
+#[cfg(feature = "shared-async")]
 pub mod container_shared_async;
 pub mod error;
 pub mod manager;
