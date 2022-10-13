@@ -4,7 +4,7 @@ pub mod format;
 
 use serde::{Serialize, Deserialize};
 
-use crate::error::Error;
+use crate::error::SingleFileError;
 use self::lock::FileLock;
 use self::mode::FileMode;
 pub use self::lock::{NoLock, SharedLock, ExclusiveLock};
@@ -33,7 +33,7 @@ pub struct FileManager<Format, Lock, Mode> {
 impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
 where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format> {
   /// Open a new [`FileManager`], returning an error if the file at the given path does not exist.
-  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error> {
+  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, SingleFileError> {
     let file = Mode::open(path.as_ref())?;
     Lock::lock(&file)?;
     Ok(FileManager {
@@ -45,21 +45,21 @@ where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format> {
   }
 
   /// Open a new [`FileManager`], writing the given value to the file if it does not exist.
-  pub fn create_or<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), Error>
+  pub fn create_or<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), SingleFileError>
   where for<'de> T: Serialize + Deserialize<'de> {
     let item = read_or_write(path.as_ref(), &format, || item)?;
     Ok((item, Self::open(path, format)?))
   }
 
   /// Open a new [`FileManager`], writing the result of the given closure to the file if it does not exist.
-  pub fn create_or_else<P: AsRef<Path>, T, C>(path: P, format: Format, closure: C) -> Result<(T, Self), Error>
+  pub fn create_or_else<P: AsRef<Path>, T, C>(path: P, format: Format, closure: C) -> Result<(T, Self), SingleFileError>
   where for<'de> T: Serialize + Deserialize<'de>, C: FnOnce() -> T {
     let item = read_or_write(path.as_ref(), &format, closure)?;
     Ok((item, Self::open(path, format)?))
   }
 
   /// Open a new [`FileManager`], writing the default value of `T` to the file if it does not exist.
-  pub fn create_or_default<P: AsRef<Path>, T>(path: P, format: Format) -> Result<(T, Self), Error>
+  pub fn create_or_default<P: AsRef<Path>, T>(path: P, format: Format) -> Result<(T, Self), SingleFileError>
   where for<'de> T: Serialize + Deserialize<'de>, T: Default {
     let item = read_or_write(path.as_ref(), &format, T::default)?;
     Ok((item, Self::open(path, format)?))
@@ -69,7 +69,7 @@ where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format> {
 impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
 where Lock: FileLock {
   /// Unlocks and closes this [`FileManager`].
-  pub fn close(self) -> Result<(), Error> {
+  pub fn close(self) -> Result<(), SingleFileError> {
     Lock::unlock(&self.file)?;
     self.file.sync_all()?;
     Ok(())
@@ -80,14 +80,14 @@ impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
 where Format: FileFormat {
   /// Writes a given value to the file managed by this manager.
   #[inline]
-  pub fn write<T>(&self, value: &T) -> Result<(), Error>
+  pub fn write<T>(&self, value: &T) -> Result<(), SingleFileError>
   where Mode: Writing<T, Format> {
     self.mode.write(&self.file, value)
   }
 
   /// Reads a value from the file managed by this manager.
   #[inline]
-  pub fn read<T>(&self) -> Result<T, Error>
+  pub fn read<T>(&self) -> Result<T, SingleFileError>
   where Mode: Reading<T, Format> {
     self.mode.read(&self.file)
   }
@@ -130,7 +130,7 @@ pub type ManagerReadonlyLocked<Format> = FileManager<Format, SharedLock, Readonl
 /// Type alias to a readable and writable, exclusively-locked `FileManager`.
 pub type ManagerWritableLocked<Format> = FileManager<Format, ExclusiveLock, Writable<Format>>;
 
-fn read_or_write<T, C, Format>(path: &Path, format: &Format, closure: C) -> Result<T, Error>
+fn read_or_write<T, C, Format>(path: &Path, format: &Format, closure: C) -> Result<T, SingleFileError>
 where for<'de> T: Serialize + Deserialize<'de>, Format: FileFormat, C: FnOnce() -> T {
   use std::io::ErrorKind::NotFound;
   match OpenOptions::new().read(true).open(path) {

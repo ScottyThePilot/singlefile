@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::error::Error;
+use crate::error::SingleFileError;
 use crate::manager::lock::FileLock;
 use crate::manager::mode::FileMode;
 use crate::manager::*;
@@ -60,7 +60,7 @@ impl<T> Container<T, ()> {
 impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
 where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format>, for<'de> T: Serialize + Deserialize<'de> {
   /// Opens a new [`Container`], returning an error if the file at the given path does not exist.
-  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
+  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, SingleFileError>
   where Mode: Reading<T, Format> {
     let manager = FileManager::open(path, format)?;
     let item = manager.read()?;
@@ -68,20 +68,20 @@ where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format>, for<'de> T: Se
   }
 
   /// Opens a new [`Container`], writing the given value to the file if it does not exist.
-  pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error> {
+  pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, SingleFileError> {
     let (item, manager) = FileManager::create_or(path, format, item)?;
     Ok(Container { item, manager })
   }
 
   /// Opens a new [`Container`], writing the result of the given closure to the file if it does not exist.
-  pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error>
+  pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, SingleFileError>
   where C: FnOnce() -> T {
     let (item, manager) = FileManager::create_or_else(path, format, closure)?;
     Ok(Container { item, manager })
   }
 
   /// Opens a new [`Container`], writing the default value of `T` to the file if it does not exist.
-  pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
+  pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, SingleFileError>
   where T: Default {
     let (item, manager) = FileManager::create_or_default(path, format)?;
     Ok(Container { item, manager })
@@ -91,19 +91,19 @@ where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format>, for<'de> T: Se
 impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
 where Format: FileFormat {
   /// Reads a value from the managed file, replacing the current state in memory.
-  pub fn refresh(&mut self) -> Result<(), Error>
+  pub fn refresh(&mut self) -> Result<(), SingleFileError>
   where Mode: Reading<T, Format> {
     self.manager.read().map(|item| self.item = item)
   }
 
   /// Writes the current in-memory state to the managed file.
-  pub fn commit(&self) -> Result<(), Error>
+  pub fn commit(&self) -> Result<(), SingleFileError>
   where Mode: Writing<T, Format> {
     self.manager.write(&self.item)
   }
 
   /// Writes a given state to the managed file, replacing the in-memory state.
-  pub fn commit_with(&mut self, item: T) -> Result<(), Error>
+  pub fn commit_with(&mut self, item: T) -> Result<(), SingleFileError>
   where Mode: Writing<T, Format> {
     self.item = item;
     self.manager.write(&self.item)

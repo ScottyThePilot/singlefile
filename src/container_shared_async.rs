@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::error::Error;
+use crate::error::*;
 use crate::container::*;
 use crate::manager::lock::FileLock;
 use crate::manager::mode::FileMode;
@@ -102,7 +102,7 @@ where
   for<'de> T: Serialize + Deserialize<'de> + Send + 'static
 {
   /// Opens a new [`ContainerSharedMutable`], returning an error if the file at the given path does not exist.
-  pub async fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
+  pub async fn open<P: AsRef<Path>>(path: P, format: Format) -> SingleFileResult<Self>
   where Mode: Reading<T, Format> {
     let path = path.as_ref().to_owned();
     spawn_blocking(move || Container::<T, _>::open(path, format))
@@ -110,14 +110,14 @@ where
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the given value to the file if it does not exist.
-  pub async fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error> {
+  pub async fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> SingleFileResult<Self> {
     let path = path.as_ref().to_owned();
     spawn_blocking(move || Container::<T, _>::create_or(path, format, item))
       .await.unwrap().map(From::from)
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the result of the given closure to the file if it does not exist.
-  pub async fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error>
+  pub async fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> SingleFileResult<Self>
   where C: FnOnce() -> T + Send + 'static {
     let path = path.as_ref().to_owned();
     spawn_blocking(move || Container::<T, _>::create_or_else(path, format, closure))
@@ -125,7 +125,7 @@ where
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the default value of `T` to the file if it does not exist.
-  pub async fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
+  pub async fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> SingleFileResult<Self>
   where T: Default {
     let path = path.as_ref().to_owned();
     spawn_blocking(move || Container::<T, _>::create_or_default(path, format))
@@ -145,31 +145,32 @@ where
   /// for the duration of the provided function or closure.
   ///
   /// The provided closure takes (1) a reference to the new state, and (2) the old state.
-  pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error>
+  pub async fn operate_refresh<F, R>(&self, operation: F) -> SingleFileResult<R>
   where Mode: Reading<T, Format>, F: FnOnce(&T, T) -> R {
     let mut guard = self.access_owned_mut().await;
     let manager = self.manager.clone();
     let item = spawn_blocking(move || manager.read())
       .await.expect("blocking task failed")?;
     let old_item = std::mem::replace(&mut *guard, item);
+    let guard = guard.downgrade();
     Ok(operation(&guard, old_item))
   }
 
   /// Grants the caller mutable access to the underlying value `T`,
   /// but only for the duration of the provided function or closure,
-  /// immediately committing any changes made.
-  pub async fn operate_mut_commit<F, R>(&self, operation: F) -> Result<R, Error>
-  where Mode: Writing<T, Format>, F: FnOnce(&mut T) -> R {
+  /// immediately committing any changes made as long as no error was returned.
+  pub async fn operate_mut_commit<F, R, U>(&self, operation: F) -> SingleFileUserResult<R, U>
+  where Mode: Writing<T, Format>, F: FnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_owned_mut().await;
-    let ret = operation(&mut guard);
-    self.commit_guard(guard.downgrade()).await
-      .map(|()| ret)
+    let ret = operation(&mut guard).map_err(SingleFileUserError::User)?;
+    self.commit_guard(guard.downgrade()).await?;
+    Ok(ret)
   }
 
   /// Reads a value from the managed file, replacing the current state in memory.
   ///
   /// Returns the value of the previous state if the operation succeeded.
-  pub async fn refresh(&self) -> Result<T, Error>
+  pub async fn refresh(&self) -> SingleFileResult<T>
   where Mode: Reading<T, Format> {
     let mut guard = self.access_owned_mut().await;
     let manager = self.manager.clone();
@@ -180,13 +181,13 @@ where
   }
 
   /// Writes the current in-memory state to the managed file.
-  pub async fn commit(&self) -> Result<(), Error>
+  pub async fn commit(&self) -> SingleFileResult
   where Mode: Writing<T, Format> {
     let guard = self.access_owned().await;
     self.commit_guard(guard).await
   }
 
-  async fn commit_guard(&self, guard: OwnedAccessGuard<T>) -> Result<(), Error>
+  pub async fn commit_guard(&self, guard: OwnedAccessGuard<T>) -> SingleFileResult
   where Mode: Writing<T, Format> {
     let manager = self.manager.clone();
     spawn_blocking(move || manager.write(&*guard))
@@ -211,4 +212,49 @@ impl<T, Manager> From<Container<T, Manager>> for ContainerAsync<T, Manager> {
       manager: Arc::new(container.manager)
     }
   }
+}
+
+/// Mirrors the functionality of [`ContainerAsync::operate`], but allows the operation to be async.
+/// A macro is necessary to sidestep some of the lifetime rules regarding async and functions.
+/// The return type must be specified, and must be a `Result`.
+#[macro_export]
+macro_rules! operate_async {
+  ($container:expr, async |$arg:ident| -> $Ret:ty $block:block) => {async {
+    let _container = $container;
+    let mut _guard = _container.access().await;
+    let $arg: &_ = &*_guard;
+    let _ret = $crate::private::noop::<$Ret>(async { $block }.await)?;
+    std::mem::drop(_guard);
+    <$Ret>::Ok(_ret)
+  }};
+}
+
+/// Mirrors the functionality of [`ContainerAsync::operate_mut`], but allows the operation to be async.
+/// A macro is necessary to sidestep some of the lifetime rules regarding async and functions.
+/// The return type must be specified, and must be a `Result`.
+#[macro_export]
+macro_rules! operate_mut_async {
+  ($container:expr, async |$arg:ident| -> $Ret:ty $block:block) => {async {
+    let _container = $container;
+    let mut _guard = _container.access_mut().await;
+    let $arg: &mut _ = &mut *_guard;
+    let _ret = $crate::private::noop::<$Ret>(async { $block }.await)?;
+    std::mem::drop(_guard);
+    <$Ret>::Ok(_ret)
+  }};
+}
+
+/// Mirrors the functionality of [`ContainerAsync::operate_mut_commit`], but allows the operation to be async.
+/// A macro is necessary to sidestep some of the lifetime rules regarding async and functions.
+/// The return type must be specified, and must be a `Result`.
+#[macro_export]
+macro_rules! operate_mut_commit_async {
+  ($container:expr, async |$arg:ident| -> $Ret:ty $block:block) => {async {
+    let _container = $container;
+    let mut _guard = _container.access_owned_mut().await;
+    let $arg: &mut _ = &mut *_guard;
+    let _ret = $crate::private::noop::<$Ret>(async { $block }.await)?;
+    _container.commit_guard(_guard.downgrade()).await?;
+    <$Ret>::Ok(_ret)
+  }};
 }

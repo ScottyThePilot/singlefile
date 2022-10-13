@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::error::Error;
+use crate::error::SingleFileError;
 use crate::manager::format::FileFormat;
 
 use std::fs::{File, OpenOptions};
@@ -17,12 +17,12 @@ pub trait FileMode<Format>: From<Format> {
 
 /// Extends `FileMode`, adding the ability to read from files.
 pub trait Reading<T, Format>: FileMode<Format> {
-  fn read(&self, file: &File) -> Result<T, Error>;
+  fn read(&self, file: &File) -> Result<T, SingleFileError>;
 }
 
 /// Extends `FileMode`, adding the ability to write to files.
 pub trait Writing<T, Format>: FileMode<Format> {
-  fn write(&self, file: &File, value: &T) -> Result<(), Error>;
+  fn write(&self, file: &File, value: &T) -> Result<(), SingleFileError>;
 }
 
 
@@ -51,7 +51,7 @@ where Format: Default + FileFormat {
 impl<T, Format> Reading<T, Format> for Readonly<Format>
 where for<'de> T: Deserialize<'de>, Format: FileFormat {
   #[inline]
-  fn read(&self, file: &File) -> Result<T, Error> {
+  fn read(&self, file: &File) -> Result<T, SingleFileError> {
     read(&self.format, file)
   }
 }
@@ -89,7 +89,7 @@ where Format: Default + FileFormat {
 impl<T, Format> Reading<T, Format> for Writable<Format>
 where for<'de> T: Deserialize<'de>, Format: FileFormat {
   #[inline]
-  fn read(&self, file: &File) -> Result<T, Error> {
+  fn read(&self, file: &File) -> Result<T, SingleFileError> {
     read(&self.format, file)
   }
 }
@@ -97,7 +97,7 @@ where for<'de> T: Deserialize<'de>, Format: FileFormat {
 impl<T, Format> Writing<T, Format> for Writable<Format>
 where T: Serialize, Format: FileFormat {
   #[inline]
-  fn write(&self, file: &File, value: &T) -> Result<(), Error> {
+  fn write(&self, file: &File, value: &T) -> Result<(), SingleFileError> {
     write(&self.format, file, value)
   }
 }
@@ -111,17 +111,19 @@ impl<Format> FileMode<Format> for Writable<Format> {
 
 
 
-pub(crate) fn read<T, Format>(format: &Format, mut file: &File) -> Result<T, Error>
+pub(crate) fn read<T, Format>(format: &Format, mut file: &File) -> Result<T, SingleFileError>
 where for<'de> T: Deserialize<'de>, Format: FileFormat {
-  let item = format.from_reader(file)?;
+  let item = format.from_reader(file)
+    .map_err(SingleFileError::Format)?;
   file.seek(SeekFrom::Start(0))?;
   Ok(item)
 }
 
-pub(crate) fn write<T, Format>(format: &Format, mut file: &File, value: &T) -> Result<(), Error>
+pub(crate) fn write<T, Format>(format: &Format, mut file: &File, value: &T) -> Result<(), SingleFileError>
 where T: Serialize, Format: FileFormat {
   file.set_len(0)?;
-  format.to_writer(file, value)?;
+  format.to_writer(file, value)
+    .map_err(SingleFileError::Format)?;
   file.seek(SeekFrom::Start(0))?;
   file.sync_all()?;
   Ok(())

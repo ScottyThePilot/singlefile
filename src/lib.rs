@@ -4,6 +4,7 @@
 #![warn(missing_debug_implementations)]
 extern crate fs4;
 extern crate serde;
+extern crate thiserror;
 #[cfg(feature = "tokio")]
 extern crate tokio;
 
@@ -22,7 +23,15 @@ pub use crate::container::ContainerWritable;
 pub use crate::container::ContainerReadonlyLocked;
 pub use crate::container::ContainerWritableLocked;
 
-pub use crate::error::Error;
+pub use crate::error::SingleFileError;
+
+#[doc(hidden)]
+pub mod private {
+  #[cfg(feature = "shared-async")]
+  #[doc(hidden)]
+  #[inline(always)]
+  pub fn noop<T>(t: T) -> T { t }
+}
 
 #[doc(hidden)]
 #[deprecated = "use `container_shared_async` instead"]

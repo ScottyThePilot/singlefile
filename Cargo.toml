@@ -1,12 +1,13 @@
 [package]
 name = "singlefile"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 edition = "2021"
 
 [dependencies]
 fs4 = "0.6"
 serde = "1.0"
+thiserror = "1.0"
 
 [dependencies.parking_lot]
 version = "0.12"
@@ -18,7 +19,7 @@ features = ["rt", "sync"]
 optional = true
 
 [features]
-default = []
+default = ["shared", "shared-async"]
 shared = ["dep:parking_lot"]
 shared-async = ["dep:tokio"]
 tokio = ["shared-async"] # deprecated

@@ -3,7 +3,7 @@ use serde::de::DeserializeOwned;
 
 use std::io::{Read, Write};
 
-
+// TODO: Re-write `FileFormat` to be framework-agnostic.
 
 /// An error created by an implementation of `FileFormat`.
 pub type FormatError = Box<dyn std::error::Error + Send + Sync + 'static>;

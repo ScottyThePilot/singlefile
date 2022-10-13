@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::error::Error;
+use crate::error::*;
 use crate::container::*;
 use crate::manager::lock::FileLock;
 use crate::manager::mode::FileMode;
@@ -75,27 +75,27 @@ where
 {
   /// Opens a new [`ContainerSharedMutable`], returning an error if the file at the given path does not exist.
   #[inline]
-  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
+  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> SingleFileResult<Self>
   where Mode: Reading<T, Format> {
     Container::<T, _>::open(path, format).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the given value to the file if it does not exist.
   #[inline]
-  pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error> {
+  pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> SingleFileResult<Self> {
     Container::<T, _>::create_or(path, format, item).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the result of the given closure to the file if it does not exist.
   #[inline]
-  pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error>
+  pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> SingleFileResult<Self>
   where C: FnOnce() -> T {
     Container::<T, _>::create_or_else(path, format, closure).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedMutable`], writing the default value of `T` to the file if it does not exist.
   #[inline]
-  pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error>
+  pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> SingleFileResult<Self>
   where T: Default {
     Container::<T, _>::create_or_default(path, format).map(From::from)
   }
@@ -108,7 +108,7 @@ where Format: FileFormat {
   /// for the duration of the provided function or closure.
   ///
   /// The provided closure takes (1) a reference to the new state, and (2) the old state.
-  pub fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error>
+  pub fn operate_refresh<F, R>(&self, operation: F) -> SingleFileResult<R>
   where Mode: Reading<T, Format>, F: FnOnce(&T, T) -> R {
     let mut guard = self.access_mut();
     let item = self.ptr.manager.read()?;
@@ -119,18 +119,18 @@ where Format: FileFormat {
   /// Grants the caller mutable access to the underlying value `T`,
   /// but only for the duration of the provided function or closure,
   /// immediately committing any changes made.
-  pub fn operate_mut_commit<F, R>(&self, operation: F) -> Result<R, Error>
-  where Mode: Writing<T, Format>, F: FnOnce(&mut T) -> R {
+  pub fn operate_mut_commit<F, R, U>(&self, operation: F) -> SingleFileUserResult<R, U>
+  where Mode: Writing<T, Format>, F: FnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_mut();
-    let ret = operation(&mut guard);
-    self.commit_guard(RwLockWriteGuard::downgrade(guard))
-      .map(|()| ret)
+    let ret = operation(&mut guard).map_err(SingleFileUserError::User)?;
+    self.commit_guard(RwLockWriteGuard::downgrade(guard))?;
+    Ok(ret)
   }
 
   /// Reads a value from the managed file, replacing the current state in memory.
   ///
   /// Returns the value of the previous state if the operation succeeded.
-  pub fn refresh(&self) -> Result<T, Error>
+  pub fn refresh(&self) -> SingleFileResult<T>
   where Mode: Reading<T, Format> {
     let mut guard = self.access_mut();
     let item = self.ptr.manager.read()?;
@@ -139,13 +139,16 @@ where Format: FileFormat {
   }
 
   /// Writes the current in-memory state to the managed file.
-  pub fn commit(&self) -> Result<(), Error>
+  ///
+  /// Don't call this if you currently have an access guard, use [`ContainerShared::commit_guard`] instead.
+  pub fn commit(&self) -> SingleFileResult
   where Mode: Writing<T, Format> {
     let guard = self.access();
     self.commit_guard(guard)
   }
 
-  pub fn commit_guard(&self, guard: AccessGuard<'_, T>) -> Result<(), Error>
+  /// Writes to the managed file given an access guard.
+  pub fn commit_guard(&self, guard: AccessGuard<'_, T>) -> SingleFileResult
   where Mode: Writing<T, Format> {
     self.ptr.manager.write(&*guard)
   }
