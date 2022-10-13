@@ -110,6 +110,14 @@ where Format: FileFormat {
   }
 }
 
+impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
+where Lock: FileLock {
+  /// Unlocks and closes this [`Container`], returning the contained state.
+  pub fn close(self) -> Result<T, SingleFileError> {
+    self.manager.close().map(|()| self.item)
+  }
+}
+
 impl<T, Manager> Deref for Container<T, Manager> {
   type Target = T;
 

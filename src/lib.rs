@@ -23,7 +23,9 @@ pub use crate::container::ContainerWritable;
 pub use crate::container::ContainerReadonlyLocked;
 pub use crate::container::ContainerWritableLocked;
 
-pub use crate::error::SingleFileError;
+pub use crate::error::{SingleFileError, SingleFileUserError};
+
+pub use crate::manager::format::{FileFormat, FormatError};
 
 #[doc(hidden)]
 pub mod private {
