@@ -1,18 +1,19 @@
+//! Structs and traits for manipulating files in a generic way.
+
 pub mod lock;
 pub mod mode;
 pub mod format;
 
-use serde::{Serialize, Deserialize};
-
-use crate::error::SingleFileError;
+use crate::error::Error;
 use self::lock::FileLock;
 use self::mode::FileMode;
 pub use self::lock::{NoLock, SharedLock, ExclusiveLock};
-pub use self::mode::{Readonly, Writable, Reading, Writing};
+pub use self::mode::{Readonly, Writable, Reading, Writing, Atomic};
 pub use self::format::FileFormat;
 
-use std::path::Path;
+use std::io;
 use std::marker::PhantomData;
+use std::path::Path;
 use std::fs::{File, OpenOptions};
 
 #[cfg(unix)]
@@ -31,9 +32,9 @@ pub struct FileManager<Format, Lock, Mode> {
 }
 
 impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
-where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format> {
+where Lock: FileLock, Mode: FileMode<Format> {
   /// Open a new [`FileManager`], returning an error if the file at the given path does not exist.
-  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, SingleFileError> {
+  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> io::Result<Self> {
     let file = Mode::open(path.as_ref())?;
     Lock::lock(&file)?;
     Ok(FileManager {
@@ -45,22 +46,22 @@ where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format> {
   }
 
   /// Open a new [`FileManager`], writing the given value to the file if it does not exist.
-  pub fn create_or<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), SingleFileError>
-  where for<'de> T: Serialize + Deserialize<'de> {
+  pub fn create_or<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), Error<Format::FormatError>>
+  where Format: FileFormat<T> {
     let item = read_or_write(path.as_ref(), &format, || item)?;
     Ok((item, Self::open(path, format)?))
   }
 
   /// Open a new [`FileManager`], writing the result of the given closure to the file if it does not exist.
-  pub fn create_or_else<P: AsRef<Path>, T, C>(path: P, format: Format, closure: C) -> Result<(T, Self), SingleFileError>
-  where for<'de> T: Serialize + Deserialize<'de>, C: FnOnce() -> T {
+  pub fn create_or_else<P: AsRef<Path>, T, C>(path: P, format: Format, closure: C) -> Result<(T, Self), Error<Format::FormatError>>
+  where Format: FileFormat<T>, C: FnOnce() -> T {
     let item = read_or_write(path.as_ref(), &format, closure)?;
     Ok((item, Self::open(path, format)?))
   }
 
   /// Open a new [`FileManager`], writing the default value of `T` to the file if it does not exist.
-  pub fn create_or_default<P: AsRef<Path>, T>(path: P, format: Format) -> Result<(T, Self), SingleFileError>
-  where for<'de> T: Serialize + Deserialize<'de>, T: Default {
+  pub fn create_or_default<P: AsRef<Path>, T>(path: P, format: Format) -> Result<(T, Self), Error<Format::FormatError>>
+  where Format: FileFormat<T>, T: Default {
     let item = read_or_write(path.as_ref(), &format, T::default)?;
     Ok((item, Self::open(path, format)?))
   }
@@ -69,26 +70,25 @@ where Format: FileFormat, Lock: FileLock, Mode: FileMode<Format> {
 impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
 where Lock: FileLock {
   /// Unlocks and closes this [`FileManager`].
-  pub fn close(self) -> Result<(), SingleFileError> {
+  pub fn close(self) -> io::Result<()> {
     Lock::unlock(&self.file)?;
     self.file.sync_all()?;
     Ok(())
   }
 }
 
-impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
-where Format: FileFormat {
+impl<Format, Lock, Mode> FileManager<Format, Lock, Mode> {
   /// Writes a given value to the file managed by this manager.
   #[inline]
-  pub fn write<T>(&self, value: &T) -> Result<(), SingleFileError>
-  where Mode: Writing<T, Format> {
+  pub fn write<T>(&self, value: &T) -> Result<(), Error<Format::FormatError>>
+  where Format: FileFormat<T>, Mode: Writing<T, Format> {
     self.mode.write(&self.file, value)
   }
 
   /// Reads a value from the file managed by this manager.
   #[inline]
-  pub fn read<T>(&self) -> Result<T, SingleFileError>
-  where Mode: Reading<T, Format> {
+  pub fn read<T>(&self) -> Result<T, Error<Format::FormatError>>
+  where Format: FileFormat<T>, Mode: Reading<T, Format> {
     self.mode.read(&self.file)
   }
 }
@@ -121,17 +121,23 @@ impl<Format, Lock, Mode> AsRawHandle for FileManager<Format, Lock, Mode> {
   }
 }
 
-/// Type alias to a read-only, unlocked `FileManager`.
+/// Type alias to a file manager that is read-only, and has no file lock.
 pub type ManagerReadonly<Format> = FileManager<Format, NoLock, Readonly<Format>>;
-/// Type alias to a readable and writable, unlocked `FileManager`.
+/// Type alias to a file manager that is readable and writable, and has no file lock.
 pub type ManagerWritable<Format> = FileManager<Format, NoLock, Writable<Format>>;
-/// Type alias to a read-only, shared-locked `FileManager`.
+/// Type alias to a file manager that is readable and writable (with atomic writes), and has no file lock.
+pub type ManagerAtomic<Format> = FileManager<Format, NoLock, Atomic<Format>>;
+/// Type alias to a file manager that is read-only, and has a shared file lock.
+/// See [`Atomic`] for more information.
 pub type ManagerReadonlyLocked<Format> = FileManager<Format, SharedLock, Readonly<Format>>;
-/// Type alias to a readable and writable, exclusively-locked `FileManager`.
+/// Type alias to a file manager that is readable and writable, and has an exclusive file lock.
 pub type ManagerWritableLocked<Format> = FileManager<Format, ExclusiveLock, Writable<Format>>;
+/// Type alias to a file manager that is readable and writable (with atomic writes), and has an exclusive file lock.
+/// See [`Atomic`] for more information.
+pub type ManagerAtomicLocked<Format> = FileManager<Format, ExclusiveLock, Atomic<Format>>;
 
-fn read_or_write<T, C, Format>(path: &Path, format: &Format, closure: C) -> Result<T, SingleFileError>
-where for<'de> T: Serialize + Deserialize<'de>, Format: FileFormat, C: FnOnce() -> T {
+fn read_or_write<T, C, Format>(path: &Path, format: &Format, closure: C) -> Result<T, Error<Format::FormatError>>
+where Format: FileFormat<T>, C: FnOnce() -> T {
   use std::io::ErrorKind::NotFound;
   match OpenOptions::new().read(true).open(path) {
     Ok(file) => self::mode::read(format, &file),

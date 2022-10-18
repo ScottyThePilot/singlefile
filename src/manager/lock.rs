@@ -1,3 +1,5 @@
+//! Defines different types of file system locks.
+
 use std::fs::File;
 use std::io;
 
@@ -5,8 +7,10 @@ use std::io;
 
 /// Describes a mode by which a file can be locked or unlocked.
 pub trait FileLock {
+  /// Locks the file.
   fn lock(file: &File) -> io::Result<()>;
 
+  /// Unlocks the file.
   fn unlock(file: &File) -> io::Result<()>;
 }
 
