@@ -49,6 +49,7 @@ let my_container = ContainerSharedWritable::<MyData, Json>::create_or_default("m
 std::thread::spawn(move || {
   my_container.operate_mut_commit(|my_data| {
     my_data.magic_number += 1;
+    Ok::<(), Infallible>(())
   });
 });
 ```
