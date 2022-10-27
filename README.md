@@ -38,6 +38,9 @@ SingleFile also provides a `ContainerShared` type that can be used from multiple
 a `ContainerAsync` that can be used from multiple threads and spawns its operations asynchronously.
 Currently, `ContainerAsync` can only be guaranteed to work alongside Tokio.
 
+The shared container types can be enabled with the `shared` cargo feature.
+The async container types can be enabled with the `shared-async` cargo feature.
+
 ```rust
 // A readable, writable container with multiple-ownership
 use singlefile::container_shared::ContainerSharedWritable;

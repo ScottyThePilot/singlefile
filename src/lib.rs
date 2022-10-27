@@ -40,17 +40,20 @@
 //! a [`ContainerAsync`] that can be used from multiple threads and spawns its operations asynchronously.
 //! Currently, [`ContainerAsync`] can only be guaranteed to work alongside Tokio.
 //!
+//! The shared container types can be enabled with the `shared` cargo feature.
+//! The async container types can be enabled with the `shared-async` cargo feature.
+//!
 //! ```no_run
 //! # singlefile::define_file_format_serde!(Json, serde_json::Error, serde_json::to_writer, serde_json::from_reader);
 //! # use std::convert::Infallible;
 //! // A readable, writable container with multiple-ownership
 //! use singlefile::container_shared::ContainerSharedWritable;
-//! # use serde::{Serialize, Deserialize};
-//! #
-//! # #[derive(Serialize, Deserialize, Default)]
-//! # struct MyData {
-//! #   magic_number: i32
-//! # }
+//! use serde::{Serialize, Deserialize};
+//!
+//! #[derive(Serialize, Deserialize, Default)]
+//! struct MyData {
+//!   magic_number: i32
+//! }
 //!
 //! // `ContainerShared` types may be cloned cheaply, they behave like `Arc`s
 //! let my_container = ContainerSharedWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
@@ -132,6 +135,8 @@ pub use crate::manager::format::FileFormat;
 
 #[doc(hidden)]
 pub mod private {
+  /// A helper macro for generating a `FileFormat` struct from basic functions.
+  /// This is only used to make the doc tests not incredibly verbose.
   #[doc(hidden)]
   #[macro_export]
   macro_rules! define_file_format_serde {

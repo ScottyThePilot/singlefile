@@ -1,4 +1,6 @@
 //! Container constructs allowing multiple-ownership, asynchronous, managed access to a file.
+//!
+//! This module can be enabled with the `shared-async` cargo feature.
 
 use crate::error::{Error, UserError};
 use crate::container::*;
