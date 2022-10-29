@@ -50,6 +50,8 @@ pub struct ContainerAsync<T, Manager> {
 
 impl<T, Manager> ContainerAsync<T, Manager> {
   /// Gets a reference to the contained file manager.
+  ///
+  /// It is inadvisable to manipulate the manager manually.
   #[inline]
   pub fn manager(&self) -> &Manager {
     &self.manager

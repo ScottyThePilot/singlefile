@@ -37,18 +37,18 @@ pub trait FileFormat<T> {
   /// The type of error to return from `to_writer` and `from_reader`.
   type FormatError: std::error::Error;
 
+  /// Deserialize a value from a `Read` stream.
+  fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError>;
+
   /// Serialize a value into a `Write` stream.
   fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError>;
 
   /// Serialize a value into a byte vec.
-  fn to_buf(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
+  fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
     let mut buf = Cursor::new(Vec::new());
     self.to_writer(&mut buf, value)?;
     Ok(buf.into_inner())
   }
-
-  /// Deserialize a value from a `Read` stream.
-  fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError>;
 }
 
 impl<T, Format> FileFormat<T> for &Format

@@ -39,6 +39,8 @@ impl<T, Manager> Container<T, Manager> {
   }
 
   /// Gets a reference to the contained file manager.
+  ///
+  /// It is inadvisable to manipulate the manager manually.
   #[inline(always)]
   pub const fn manager(&self) -> &Manager {
     &self.manager

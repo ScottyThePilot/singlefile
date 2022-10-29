@@ -1,4 +1,8 @@
-//! Structs and traits for manipulating files in a generic way.
+//! This module contains the [`FileManager`] struct which gives more direct access to a file.
+//!
+//! [`FileManager`]s are generic, so you can implement custom file modes and lock modes.
+//! Custom file modes may not be fully compatible with the built-in container types
+//! unless they implement the [`Reading`] and [`Writing`] traits.
 
 pub mod lock;
 pub mod mode;
@@ -8,7 +12,7 @@ use crate::error::Error;
 use self::lock::FileLock;
 use self::mode::FileMode;
 pub use self::lock::{NoLock, SharedLock, ExclusiveLock};
-pub use self::mode::{Readonly, Writable, Reading, Writing, Atomic};
+pub use self::mode::{Atomic, Readonly, Writable, Reading, Writing};
 pub use self::format::FileFormat;
 
 use std::io;
@@ -126,9 +130,9 @@ pub type ManagerReadonly<Format> = FileManager<Format, NoLock, Readonly<Format>>
 /// Type alias to a file manager that is readable and writable, and has no file lock.
 pub type ManagerWritable<Format> = FileManager<Format, NoLock, Writable<Format>>;
 /// Type alias to a file manager that is readable and writable (with atomic writes), and has no file lock.
+/// See [`Atomic`] for more information.
 pub type ManagerAtomic<Format> = FileManager<Format, NoLock, Atomic<Format>>;
 /// Type alias to a file manager that is read-only, and has a shared file lock.
-/// See [`Atomic`] for more information.
 pub type ManagerReadonlyLocked<Format> = FileManager<Format, SharedLock, Readonly<Format>>;
 /// Type alias to a file manager that is readable and writable, and has an exclusive file lock.
 pub type ManagerWritableLocked<Format> = FileManager<Format, ExclusiveLock, Writable<Format>>;
