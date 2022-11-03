@@ -3,6 +3,8 @@ name = "singlefile"
 version = "0.1.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 description = "Dead simple file data manipulation."
+documentation = "https://docs.rs/singlefile"
+repository = "https://github.com/ScottyThePilot/singlefile"
 license = "MIT OR Apache-2.0"
 edition = "2021"
 

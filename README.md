@@ -1,4 +1,7 @@
 # SingleFile
+[![Crate](https://img.shields.io/crates/v/singlefile.svg)](https://crates.io/crates/singlefile)
+[![Documentation](https://docs.rs/singlefile/badge.svg)](https://docs.rs/singlefile)
+
 This library is designed to be a dead-simple way of accessing and manipulating files,
 treating those files as if they represent some Rust value.
 
