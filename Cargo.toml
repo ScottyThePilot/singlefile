@@ -2,6 +2,7 @@
 name = "singlefile"
 version = "0.1.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
+description = "Dead simple file data manipulation."
 license = "MIT OR Apache-2.0"
 edition = "2021"
 
