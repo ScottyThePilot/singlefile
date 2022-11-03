@@ -1,6 +1,6 @@
 [package]
 name = "singlefile"
-version = "0.5.0"
+version = "0.1.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 edition = "2021"
 
