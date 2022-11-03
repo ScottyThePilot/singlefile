@@ -3,7 +3,7 @@ This library is designed to be a dead-simple way of accessing and manipulating f
 treating those files as if they represent some Rust value.
 
 ## Usage
-SingleFile provides a generic `Container` type, along with type alias variants for different use cases.
+`singlefile` provides a generic `Container` type, along with type alias variants for different use cases.
 `Container` is named so to indicate that it contains and manages a file and a value.
 
 ```rust
@@ -34,7 +34,7 @@ We'd then expect the resulting `my_data.json` to look like:
 ```
 
 ## Shared and async containers
-SingleFile also provides a `ContainerShared` type that can be used from multiple threads, as well as
+`singlefile` also provides a `ContainerShared` type that can be used from multiple threads, as well as
 a `ContainerAsync` that can be used from multiple threads and spawns its operations asynchronously.
 Currently, `ContainerAsync` can only be guaranteed to work alongside Tokio.
 
@@ -58,8 +58,7 @@ std::thread::spawn(move || {
 ```
 
 ## File formats
-
-SingleFile is serialization framework-agnostic, so you will need a `FileFormat` adapter
+`singlefile` is serialization framework-agnostic, so you will need a `FileFormat` adapter
 before you are able to read and write a given file format to disk.
 
 Here is how you'd write a `Json` adapter for the above examples, using `serde`.

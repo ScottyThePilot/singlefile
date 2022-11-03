@@ -69,7 +69,6 @@
 //! ```
 //!
 //! ## File formats
-//!
 //! `singlefile` is serialization framework-agnostic, so you will need a [`FileFormat`] adapter
 //! before you are able to read and write a given file format to disk.
 //!
@@ -102,6 +101,7 @@
 //! [`ContainerAsync`]: crate::container_shared_async::ContainerAsync
 //! [`FileFormat`]: crate::manager::format::FileFormat
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![warn(
   missing_copy_implementations,
   missing_debug_implementations,
@@ -115,8 +115,10 @@ extern crate thiserror;
 extern crate tokio;
 
 pub mod container;
+#[cfg_attr(docsrs, doc(cfg(feature = "shared")))]
 #[cfg(feature = "shared")]
 pub mod container_shared;
+#[cfg_attr(docsrs, doc(cfg(feature = "shared-async")))]
 #[cfg(feature = "shared-async")]
 pub mod container_shared_async;
 pub mod error;
