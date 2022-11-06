@@ -1,36 +1,4 @@
-[package]
-name = "singlefile"
-version = "0.1.0"
-authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
-description = "Dead simple file data manipulation."
-documentation = "https://docs.rs/singlefile"
-repository = "https://github.com/ScottyThePilot/singlefile"
-license = "MIT OR Apache-2.0"
-edition = "2021"
-
-[dependencies]
-fs4 = "0.6.2"
-thiserror = "1.0"
-
-[dependencies.parking_lot]
-version = "0.12"
-optional = true
-
-[dependencies.tokio]
-version = "1"
-features = ["rt", "sync"]
-optional = true
-
-[dev-dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tempfile = "3.3"
-
-[features]
-default = []
-shared = ["parking_lot"]
-shared-async = ["tokio"]
-
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
+[workspace]
+members = [
+  "singlefile"
+]
