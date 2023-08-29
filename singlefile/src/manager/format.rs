@@ -5,7 +5,7 @@ pub mod default_formats;
 pub use self::default_formats::PlainBytes;
 pub use self::default_formats::PlainUtf8;
 
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, BufReader, BufWriter, Read, Write};
 
 /// A trait that describes how a file's contents should be interpreted.
 ///
@@ -40,8 +40,20 @@ pub trait FileFormat<T> {
   /// Deserialize a value from a `Read` stream.
   fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError>;
 
+  /// Identical to [`FileFormat::from_reader`], however the provided reader is buffered with [`BufReader`].
+  #[inline]
+  fn from_reader_buffered<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
+    self.from_reader(BufReader::new(reader))
+  }
+
   /// Serialize a value into a `Write` stream.
   fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError>;
+
+  /// Identical to [`FileFormat::to_writer`], however the provided writer is buffered with [`BufWriter`].
+  #[inline]
+  fn to_writer_buffered<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
+    self.to_writer(BufWriter::new(writer), value)
+  }
 
   /// Serialize a value into a byte vec.
   fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {

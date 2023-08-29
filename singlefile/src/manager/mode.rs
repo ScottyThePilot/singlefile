@@ -11,8 +11,12 @@ use std::path::Path;
 
 /// Describes a mode by which a `FileManager` can manipulate a file.
 pub trait FileMode<Format>: From<Format> {
-  /// Open a file according to this mode, returning an error if it does not exist.
-  fn open(path: &Path) -> io::Result<File>;
+  /// Whether this file mode reads from files.
+  /// If this is false, this type should not implement [`Reading`].
+  const READABLE: bool;
+  /// Whether this file mode writes to files.
+  /// If this is true, this type should not implement [`Writing`].
+  const WRITABLE: bool;
 }
 
 /// Extends `FileMode`, adding the ability to read from files.
@@ -53,10 +57,8 @@ where Format: FileFormat<T> {
 }
 
 impl<Format> FileMode<Format> for Readonly<Format> {
-  #[inline]
-  fn open(path: &Path) -> io::Result<File> {
-    OpenOptions::new().read(true).open(path)
-  }
+  const READABLE: bool = true;
+  const WRITABLE: bool = false;
 }
 
 
@@ -91,10 +93,8 @@ where Format: FileFormat<T> {
 }
 
 impl<Format> FileMode<Format> for Writable<Format> {
-  #[inline]
-  fn open(path: &Path) -> io::Result<File> {
-    OpenOptions::new().read(true).write(true).open(path)
-  }
+  const READABLE: bool = true;
+  const WRITABLE: bool = true;
 }
 
 
@@ -131,19 +131,25 @@ where Format: FileFormat<T> {
 }
 
 impl<Format> FileMode<Format> for Atomic<Format> {
-  #[inline]
-  fn open(path: &Path) -> io::Result<File> {
-    OpenOptions::new().read(true).write(true).open(path)
-  }
+  const READABLE: bool = true;
+  const WRITABLE: bool = true;
 }
 
 
+
+#[inline]
+pub(crate) fn open<Mode, Format>(path: &Path) -> io::Result<File>
+where Mode: FileMode<Format> {
+  OpenOptions::new()
+    .read(Mode::READABLE).write(Mode::WRITABLE)
+    .open(path)
+}
 
 pub(crate) fn read<T, Format>(
   format: &Format, mut file: &File
 ) -> Result<T, Error<Format::FormatError>>
 where Format: FileFormat<T> {
-  let item = format.from_reader(file)
+  let item = format.from_reader_buffered(file)
     .map_err(Error::Format)?;
   file.seek(SeekFrom::Start(0))?;
   Ok(item)
@@ -154,7 +160,7 @@ pub(crate) fn write<T, Format>(
 ) -> Result<(), Error<Format::FormatError>>
 where Format: FileFormat<T> {
   file.set_len(0)?;
-  format.to_writer(file, value)
+  format.to_writer_buffered(file, value)
     .map_err(Error::Format)?;
   file.seek(SeekFrom::Start(0))?;
   file.sync_all()?;
