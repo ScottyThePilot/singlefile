@@ -37,7 +37,7 @@ pub struct FileManager<Format, Lock, Mode> {
 
 impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
 where Lock: FileLock, Mode: FileMode<Format> {
-  /// Open a new [`FileManager`], returning an error if the file at the given path does not exist.
+  /// Opens a new [`FileManager`], returning an error if the file at the given path does not exist.
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> io::Result<Self> {
     let file = self::mode::open::<Mode, Format>(path.as_ref())?;
     Lock::lock(&file)?;
@@ -49,28 +49,28 @@ where Lock: FileLock, Mode: FileMode<Format> {
     })
   }
 
-  /// Open a new [`FileManager`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
-  pub fn create<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), Error<Format::FormatError>>
+  /// Opens a new [`FileManager`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
+  pub fn create_overwrite<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), Error<Format::FormatError>>
   where Format: FileFormat<T> {
     overwrite(path.as_ref(), &format, &item)?;
     Ok((item, Self::open(path, format)?))
   }
 
-  /// Open a new [`FileManager`], writing the given value to the file if it does not exist.
+  /// Opens a new [`FileManager`], writing the given value to the file if it does not exist.
   pub fn create_or<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), Error<Format::FormatError>>
   where Format: FileFormat<T> {
     let item = read_or_write(path.as_ref(), &format, || item)?;
     Ok((item, Self::open(path, format)?))
   }
 
-  /// Open a new [`FileManager`], writing the result of the given closure to the file if it does not exist.
+  /// Opens a new [`FileManager`], writing the result of the given closure to the file if it does not exist.
   pub fn create_or_else<P: AsRef<Path>, T, C>(path: P, format: Format, closure: C) -> Result<(T, Self), Error<Format::FormatError>>
   where Format: FileFormat<T>, C: FnOnce() -> T {
     let item = read_or_write(path.as_ref(), &format, closure)?;
     Ok((item, Self::open(path, format)?))
   }
 
-  /// Open a new [`FileManager`], writing the default value of `T` to the file if it does not exist.
+  /// Opens a new [`FileManager`], writing the default value of `T` to the file if it does not exist.
   pub fn create_or_default<P: AsRef<Path>, T>(path: P, format: Format) -> Result<(T, Self), Error<Format::FormatError>>
   where Format: FileFormat<T>, T: Default {
     let item = read_or_write(path.as_ref(), &format, T::default)?;

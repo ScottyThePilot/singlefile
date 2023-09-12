@@ -12,10 +12,10 @@ use std::path::Path;
 /// Describes a mode by which a `FileManager` can manipulate a file.
 pub trait FileMode<Format>: From<Format> {
   /// Whether this file mode reads from files.
-  /// If this is false, this type should not implement [`Reading`].
+  /// If this is true, this type should implement [`Reading`], otherwise it should not.
   const READABLE: bool;
   /// Whether this file mode writes to files.
-  /// If this is true, this type should not implement [`Writing`].
+  /// If this is true, this type should implement [`Writing`], otherwise it should not.
   const WRITABLE: bool;
 }
 
@@ -141,7 +141,8 @@ impl<Format> FileMode<Format> for Atomic<Format> {
 pub(crate) fn open<Mode, Format>(path: &Path) -> io::Result<File>
 where Mode: FileMode<Format> {
   OpenOptions::new()
-    .read(Mode::READABLE).write(Mode::WRITABLE)
+    .read(Mode::READABLE)
+    .write(Mode::WRITABLE)
     .open(path)
 }
 

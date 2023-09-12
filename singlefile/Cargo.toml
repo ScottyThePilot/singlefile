@@ -14,11 +14,12 @@ thiserror = "1.0"
 
 [dependencies.parking_lot]
 version = "0.12"
+features = ["arc_lock"]
 optional = true
 
 [dependencies.tokio]
 version = "1"
-features = ["rt", "sync"]
+features = ["rt"]
 optional = true
 
 [dev-dependencies]
@@ -27,9 +28,17 @@ serde_json = "1.0"
 tempfile = "3.3"
 
 [features]
-default = []
-shared = ["parking_lot"]
-shared-async = ["tokio"]
+# by default, tokio will use parking_lot
+default = ["tokio-parking-lot"]
+
+async = ["dep:tokio"]
+shared = ["dep:parking_lot", "tokio?/parking_lot"]
+shared-async = ["dep:tokio", "tokio?/sync"]
+
+# enables the `deadlock_detection` feature for parking_lot, if present
+deadlock-detection = ["parking_lot?/deadlock_detection"]
+# enables the `parking_lot` feature for tokio, if present
+tokio-parking-lot = ["tokio?/parking_lot"]
 
 [package.metadata.docs.rs]
 all-features = true

@@ -73,6 +73,12 @@ where Format: FileFormat<T>, Lock: FileLock, Mode: FileMode<Format> {
     Ok(Container { item, manager })
   }
 
+  /// Opens a new [`Container`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
+  pub fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error<Format::FormatError>> {
+    let (item, manager) = FileManager::create_overwrite(path, format, item)?;
+    Ok(Container { item, manager })
+  }
+
   /// Opens a new [`Container`], writing the given value to the file if it does not exist.
   pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error<Format::FormatError>> {
     let (item, manager) = FileManager::create_or(path, format, item)?;
@@ -97,9 +103,9 @@ where Format: FileFormat<T>, Lock: FileLock, Mode: FileMode<Format> {
 impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
 where Format: FileFormat<T> {
   /// Reads a value from the managed file, replacing the current state in memory.
-  pub fn refresh(&mut self) -> Result<(), Error<Format::FormatError>>
+  pub fn refresh(&mut self) -> Result<T, Error<Format::FormatError>>
   where Mode: Reading<T, Format> {
-    self.manager.read().map(|item| self.item = item)
+    self.manager.read().map(|item| std::mem::replace(&mut self.item, item))
   }
 
   /// Writes the current in-memory state to the managed file.
