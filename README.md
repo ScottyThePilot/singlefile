@@ -87,3 +87,5 @@ where T: Serialize + DeserializeOwned {
   }
 }
 ```
+
+Alternatively, you can use one of the preset file formats provided by `singlefile-formats`.

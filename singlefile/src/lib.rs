@@ -6,7 +6,7 @@
 //! [`Container`] is named so to indicate that it contains and manages a file and a value.
 //!
 //! ```no_run
-//! # singlefile::define_file_format_serde!(Json, serde_json::Error, serde_json::to_writer, serde_json::from_reader);
+//! # use singlefile_formats::json_serde::{Json, JsonError};
 //! // A readable, writable container
 //! use singlefile::container::ContainerWritable;
 //! use serde::{Serialize, Deserialize};
@@ -24,7 +24,7 @@
 //! my_container.magic_number += 1;
 //! // Write the new state of `MyData` to disk
 //! my_container.commit()?;
-//! # Ok::<(), singlefile::Error<serde_json::Error>>(())
+//! # Ok::<(), singlefile::Error<JsonError>>(())
 //! ```
 //!
 //! We'd then expect the resulting `my_data.json` to look like:
@@ -44,7 +44,7 @@
 //! The async container types can be enabled with the `shared-async` cargo feature.
 //!
 //! ```no_run
-//! # singlefile::define_file_format_serde!(Json, serde_json::Error, serde_json::to_writer, serde_json::from_reader);
+//! # use singlefile_formats::json_serde::{Json, JsonError};
 //! # use std::convert::Infallible;
 //! // A readable, writable container with multiple-ownership
 //! use singlefile::container_shared::ContainerSharedWritable;
@@ -65,7 +65,7 @@
 //!     Ok::<(), Infallible>(())
 //!   });
 //! });
-//! # Ok::<(), singlefile::Error<serde_json::Error>>(())
+//! # Ok::<(), singlefile::Error<JsonError>>(())
 //! ```
 //!
 //! ## File formats
@@ -75,6 +75,7 @@
 //! Here is how you'd write a `Json` adapter for the above examples, using `serde`.
 //!
 //! ```no_run
+//! # use singlefile_formats::json_serde::serde_json;
 //! use serde::ser::Serialize;
 //! use serde::de::DeserializeOwned;
 //! use singlefile::FileFormat;
@@ -95,6 +96,8 @@
 //!   }
 //! }
 //! ```
+//!
+//! Alternatively, you can use one of the preset file formats provided by `singlefile-formats`.
 //!
 //! [`Container`]: crate::container::Container
 //! [`ContainerShared`]: crate::container_shared::ContainerShared
@@ -136,30 +139,3 @@ pub use crate::error::{Error, UserError};
 
 #[doc(inline)]
 pub use crate::manager::format::FileFormat;
-
-#[doc(hidden)]
-pub mod private {
-  /// A helper macro for generating a `FileFormat` struct from basic functions.
-  /// This is only used to make the doc tests not incredibly verbose.
-  #[doc(hidden)]
-  #[macro_export]
-  macro_rules! define_file_format_serde {
-    ($vis:vis $Type:ident, $Error:ty, $to_writer:expr, $from_reader:expr) => {
-      #[derive(Debug, Clone, Copy)]
-      $vis struct $Type;
-
-      impl<T> $crate::FileFormat<T> for $Type
-      where T: serde::ser::Serialize + serde::de::DeserializeOwned {
-        type FormatError = $Error;
-
-        fn to_writer<W: std::io::Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
-          $to_writer(writer, value).map_err(From::from)
-        }
-
-        fn from_reader<R: std::io::Read>(&self, reader: R) -> Result<T, Self::FormatError> {
-          $from_reader(reader).map_err(From::from)
-        }
-      }
-    };
-  }
-}

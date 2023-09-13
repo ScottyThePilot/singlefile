@@ -17,6 +17,7 @@ use std::io::{Cursor, BufReader, BufWriter, Read, Write};
 /// # use serde::ser::Serialize;
 /// # use serde::de::DeserializeOwned;
 /// # use singlefile::FileFormat;
+/// # use singlefile_formats::json_serde::serde_json;
 /// # use std::io::{Read, Write};
 /// struct Json;
 ///

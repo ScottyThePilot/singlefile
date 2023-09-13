@@ -2,11 +2,12 @@
 extern crate serde;
 extern crate singlefile;
 
-use serde::ser::Serialize;
-use serde::de::DeserializeOwned;
-use singlefile::{FileFormat, ContainerWritable};
+use singlefile::ContainerWritable;
 
-use std::io::{Read, Write};
+// You can implement a file format however you want,
+// since `singlefile` is serialization-framework agnostic.
+// This example uses the preset JSON format from singlefile-formats.
+use singlefile_formats::json_serde::Json;
 
 fn main() {
   // Create a new container, the data and data format must be specified somehow.
@@ -48,25 +49,5 @@ impl Default for Data {
       magic_string: "none".to_owned(),
       is_magic: false
     }
-  }
-}
-
-#[derive(Debug)]
-struct Json;
-
-// You can implement a file format however you want,
-// since `singlefile` is serialization-framework agnostic.
-// This one uses `serde_json` and `serde` to write any value
-// implementing `Serialize` and `Deserialize` to disk in JSON format.
-impl<T> FileFormat<T> for Json
-where T: Serialize + DeserializeOwned {
-  type FormatError = serde_json::Error;
-
-  fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
-    serde_json::to_writer_pretty(writer, value).map_err(From::from)
-  }
-
-  fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
-    serde_json::from_reader(reader).map_err(From::from)
   }
 }

@@ -1,4 +1,5 @@
 [workspace]
 members = [
-  "singlefile"
+  "singlefile",
+  "singlefile-formats"
 ]

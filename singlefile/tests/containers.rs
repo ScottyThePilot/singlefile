@@ -2,12 +2,9 @@
 extern crate serde;
 extern crate singlefile;
 
-use serde::ser::Serialize;
-use serde::de::DeserializeOwned;
-use singlefile::FileFormat;
+use singlefile_formats::json_serde::Json;
 
 use std::{fs, mem};
-use std::io::{Read, Write};
 
 #[test]
 fn container_writable() {
@@ -96,21 +93,5 @@ struct Data {
 impl Default for Data {
   fn default() -> Self {
     Data { number: 0 }
-  }
-}
-
-#[derive(Debug)]
-struct Json;
-
-impl<T> FileFormat<T> for Json
-where T: Serialize + DeserializeOwned {
-  type FormatError = serde_json::Error;
-
-  fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
-    serde_json::to_writer_pretty(writer, value).map_err(From::from)
-  }
-
-  fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
-    serde_json::from_reader(reader).map_err(From::from)
   }
 }
