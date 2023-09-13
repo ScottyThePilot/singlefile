@@ -28,9 +28,9 @@ version = "1.0"
 [features]
 default = []
 # formats
-cbor_serde = ["dep:ciborium", "dep:serde"]
-json_serde = ["dep:serde_json", "dep:serde"]
-toml_serde = ["dep:toml", "dep:serde"]
+cbor-serde = ["dep:ciborium", "dep:serde"]
+json-serde = ["dep:serde_json", "dep:serde"]
+toml-serde = ["dep:toml", "dep:serde"]
 # compression
 bzip = ["dep:bzip2"]
 flate = ["dep:flate2"]

@@ -105,8 +105,8 @@ pub trait CompressionFormatLevels: CompressionFormat {
 }
 
 /// Defines a [`FileFormat`] using the CBOR binary data format.
-#[cfg_attr(docsrs, doc(cfg(feature = "cbor_serde")))]
-#[cfg(feature = "cbor_serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "cbor-serde")))]
+#[cfg(feature = "cbor-serde")]
 pub mod cbor_serde {
   pub extern crate ciborium;
 
@@ -152,8 +152,8 @@ pub mod cbor_serde {
 }
 
 /// Defines a [`FileFormat`] using the JSON data format.
-#[cfg_attr(docsrs, doc(cfg(feature = "json_serde")))]
-#[cfg(feature = "json_serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "json-serde")))]
+#[cfg(feature = "json-serde")]
 pub mod json_serde {
   pub extern crate serde_json;
 
@@ -200,8 +200,8 @@ pub mod json_serde {
 }
 
 /// Defines a [`FileFormat`] using the TOML data format.
-#[cfg_attr(docsrs, doc(cfg(feature = "toml_serde")))]
-#[cfg(feature = "toml_serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "toml-serde")))]
+#[cfg(feature = "toml-serde")]
 pub mod toml_serde {
   pub extern crate toml;
 
