@@ -13,10 +13,16 @@ use std::path::Path;
 pub type ContainerReadonly<T, Format> = Container<T, ManagerReadonly<Format>>;
 /// Type alias to a container that is readable and writable.
 pub type ContainerWritable<T, Format> = Container<T, ManagerWritable<Format>>;
+/// Type alias to a container that is readable and writable (with atomic writes).
+/// See [`Atomic`] for more information.
+pub type ContainerAtomic<T, Format> = Container<T, ManagerAtomic<Format>>;
 /// Type alias to a container that is read-only, and has a shared file lock.
 pub type ContainerReadonlyLocked<T, Format> = Container<T, ManagerReadonlyLocked<Format>>;
 /// Type alias to a container that is readable and writable, and has an exclusive file lock.
 pub type ContainerWritableLocked<T, Format> = Container<T, ManagerWritableLocked<Format>>;
+/// Type alias to a container that is readable and writable (with atomic writes), and has an exclusive file lock.
+/// See [`Atomic`] for more information.
+pub type ContainerAtomicLocked<T, Format> = Container<T, ManagerAtomicLocked<Format>>;
 
 /// A basic owned container allowing managed access to some underlying file.
 #[derive(Debug)]

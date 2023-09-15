@@ -102,6 +102,8 @@ impl<Format> FileMode<Format> for Writable<Format> {
 /// Similar to [`Writable`], but eliminates the possibility of file corruption in the case of
 /// the [`FileFormat`] failing midway during a write. The tradeoff is that file contents must be
 /// buffered in memory during a write.
+///
+/// This does not however prevent the possibility of race-condition write corruption.
 #[derive(Debug, Clone, Default)]
 pub struct Atomic<Format> {
   format: Format

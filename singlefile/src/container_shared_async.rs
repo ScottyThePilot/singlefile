@@ -27,10 +27,16 @@ use std::sync::Arc;
 pub type ContainerSharedAsyncReadonly<T, Format> = ContainerSharedAsync<T, ManagerReadonly<Format>>;
 /// Type alias to a shared, asynchronous, thread-safe container that is readable and writable.
 pub type ContainerSharedAsyncWritable<T, Format> = ContainerSharedAsync<T, ManagerWritable<Format>>;
+/// Type alias to a shared, asynchronous, thread-safe container that is readable and writable (with atomic writes).
+/// See [`Atomic`] for more information.
+pub type ContainerSharedAsyncAtomic<T, Format> = ContainerSharedAsync<T, ManagerAtomic<Format>>;
 /// Type alias to a shared, asynchronous, thread-safe container that is read-only, and has a shared file lock.
 pub type ContainerSharedAsyncReadonlyLocked<T, Format> = ContainerSharedAsync<T, ManagerReadonlyLocked<Format>>;
 /// Type alias to a shared, asynchronous, thread-safe container that is readable and writable, and has an exclusive file lock.
 pub type ContainerSharedAsyncWritableLocked<T, Format> = ContainerSharedAsync<T, ManagerWritableLocked<Format>>;
+/// Type alias to a shared, asynchronous, thread-safe container that is readable and writable (with atomic writes), and has an exclusive file lock.
+/// See [`Atomic`] for more information.
+pub type ContainerSharedAsyncAtomicLocked<T, Format> = ContainerSharedAsync<T, ManagerAtomicLocked<Format>>;
 
 /// A container that allows asynchronous atomic reference-counted, mutable access (gated by an [`RwLock`]) to the
 /// underlying file and contents. Cloning this container will not clone the underlying contents, it will clone the

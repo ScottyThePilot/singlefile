@@ -129,12 +129,6 @@ pub mod container_shared_async;
 pub mod error;
 pub mod manager;
 
-pub use crate::container::Container;
-pub use crate::container::ContainerReadonly;
-pub use crate::container::ContainerWritable;
-pub use crate::container::ContainerReadonlyLocked;
-pub use crate::container::ContainerWritableLocked;
-
 pub use crate::error::{Error, UserError};
 
 #[doc(inline)]
