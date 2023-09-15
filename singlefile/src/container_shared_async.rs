@@ -24,13 +24,13 @@ use std::path::Path;
 use std::sync::Arc;
 
 /// Type alias to a shared, asynchronous, thread-safe container that is read-only.
-pub type ContainerAsyncReadonly<T, Format> = ContainerSharedAsync<T, ManagerReadonly<Format>>;
+pub type ContainerSharedAsyncReadonly<T, Format> = ContainerSharedAsync<T, ManagerReadonly<Format>>;
 /// Type alias to a shared, asynchronous, thread-safe container that is readable and writable.
-pub type ContainerAsyncWritable<T, Format> = ContainerSharedAsync<T, ManagerWritable<Format>>;
+pub type ContainerSharedAsyncWritable<T, Format> = ContainerSharedAsync<T, ManagerWritable<Format>>;
 /// Type alias to a shared, asynchronous, thread-safe container that is read-only, and has a shared file lock.
-pub type ContainerAsyncReadonlyLocked<T, Format> = ContainerSharedAsync<T, ManagerReadonlyLocked<Format>>;
+pub type ContainerSharedAsyncReadonlyLocked<T, Format> = ContainerSharedAsync<T, ManagerReadonlyLocked<Format>>;
 /// Type alias to a shared, asynchronous, thread-safe container that is readable and writable, and has an exclusive file lock.
-pub type ContainerAsyncWritableLocked<T, Format> = ContainerSharedAsync<T, ManagerWritableLocked<Format>>;
+pub type ContainerSharedAsyncWritableLocked<T, Format> = ContainerSharedAsync<T, ManagerWritableLocked<Format>>;
 
 /// A container that allows asynchronous atomic reference-counted, mutable access (gated by an [`RwLock`]) to the
 /// underlying file and contents. Cloning this container will not clone the underlying contents, it will clone the
@@ -42,6 +42,11 @@ pub struct ContainerSharedAsync<T, Manager> {
 }
 
 impl<T, Manager> ContainerSharedAsync<T, Manager> {
+  /// Create a new [`ContainerSharedAsync`] from the value and manager directly.
+  pub fn new(value: T, manager: Manager) -> Self {
+    ContainerSharedAsync::from(Container::new(value, manager))
+  }
+
   /// Returns the inner owned [`Container`], as long as there are no other existing pointers.
   /// Otherwise, the same [`ContainerSharedAsync`] is returned back.
   pub fn try_unwrap(self) -> Result<Container<T, Manager>, Self> {
@@ -136,16 +141,16 @@ where
   }
 
   /// Opens a new [`ContainerSharedAsync`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
-  pub async fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error<Format::FormatError>> {
+  pub async fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
     let path = path.as_ref().to_owned();
-    spawn_blocking(move || Container::<T, _>::create_overwrite(path, format, item))
+    spawn_blocking(move || Container::<T, _>::create_overwrite(path, format, value))
       .await.expect("blocking task failed").map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], writing the given value to the file if it does not exist.
-  pub async fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error<Format::FormatError>> {
+  pub async fn create_or<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
     let path = path.as_ref().to_owned();
-    spawn_blocking(move || Container::<T, _>::create_or(path, format, item))
+    spawn_blocking(move || Container::<T, _>::create_or(path, format, value))
       .await.expect("blocking task failed").map(From::from)
   }
 
@@ -206,10 +211,10 @@ where
   pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error<Format::FormatError>>
   where Mode: Reading<T, Format>, F: FnOnce(&T, T) -> R {
     let mut guard = self.access_owned_mut().await;
-    let (old_item, guard) = spawn_blocking(move || guard.container_mut().refresh().map(|t| (t, guard)))
+    let (old_value, guard) = spawn_blocking(move || guard.container_mut().refresh().map(|t| (t, guard)))
       .await.expect("blocking task failed")?;
     let guard = OwnedAccessGuardMut::downgrade(guard);
-    Ok(operation(&guard, old_item))
+    Ok(operation(&guard, old_value))
   }
 
   /// Grants the caller mutable access to the underlying value `T`,
@@ -256,10 +261,10 @@ where
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
-  pub async fn overwrite(&self, item: T) -> Result<(), Error<Format::FormatError>>
+  pub async fn overwrite(&self, value: T) -> Result<(), Error<Format::FormatError>>
   where Mode: Writing<T, Format> {
     let mut guard = self.access_owned_mut().await;
-    spawn_blocking(move || guard.container_mut().overwrite(item))
+    spawn_blocking(move || guard.container_mut().overwrite(value))
       .await.expect("blocking task failed")
   }
 }

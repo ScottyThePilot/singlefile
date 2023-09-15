@@ -38,8 +38,8 @@ We'd then expect the resulting `my_data.json` to look like:
 
 ## Shared and async containers
 `singlefile` also provides a `ContainerShared` type that can be used from multiple threads, as well as
-a `ContainerAsync` that can be used from multiple threads and spawns its operations asynchronously.
-Currently, `ContainerAsync` can only be guaranteed to work alongside Tokio.
+a `ContainerSharedAsync` that can be used from multiple threads and spawns its operations asynchronously.
+Currently, `ContainerSharedAsync` can only be guaranteed to work alongside Tokio.
 
 The shared container types can be enabled with the `shared` cargo feature.
 The async container types can be enabled with the `shared-async` cargo feature.

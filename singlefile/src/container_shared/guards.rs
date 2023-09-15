@@ -71,8 +71,8 @@ impl<'a, T, Manager> AccessGuardMut<'a, T, Manager> {
   }
 
   #[inline]
-  pub fn downgrade(this: Self) -> AccessGuard<'a, T, Manager> {
-    AccessGuard { inner: RwLockWriteGuard::downgrade(this.inner) }
+  pub fn downgrade(self) -> AccessGuard<'a, T, Manager> {
+    AccessGuard { inner: RwLockWriteGuard::downgrade(self.inner) }
   }
 }
 
@@ -156,8 +156,8 @@ impl<T, Manager> OwnedAccessGuardMut<T, Manager> {
   }
 
   #[inline]
-  pub fn downgrade(this: Self) -> OwnedAccessGuard<T, Manager> {
-    OwnedAccessGuard { inner: ArcRwLockWriteGuard::downgrade(this.inner) }
+  pub fn downgrade(self) -> OwnedAccessGuard<T, Manager> {
+    OwnedAccessGuard { inner: ArcRwLockWriteGuard::downgrade(self.inner) }
   }
 }
 

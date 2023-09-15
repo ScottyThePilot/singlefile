@@ -137,7 +137,6 @@ impl<Format> FileMode<Format> for Atomic<Format> {
 
 
 
-#[inline]
 pub(crate) fn open<Mode, Format>(path: &Path) -> io::Result<File>
 where Mode: FileMode<Format> {
   OpenOptions::new()
@@ -150,10 +149,10 @@ pub(crate) fn read<T, Format>(
   format: &Format, mut file: &File
 ) -> Result<T, Error<Format::FormatError>>
 where Format: FileFormat<T> {
-  let item = format.from_reader_buffered(file)
+  let value = format.from_reader_buffered(file)
     .map_err(Error::Format)?;
   file.seek(SeekFrom::Start(0))?;
-  Ok(item)
+  Ok(value)
 }
 
 pub(crate) fn write<T, Format>(

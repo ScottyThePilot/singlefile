@@ -50,31 +50,31 @@ where Lock: FileLock, Mode: FileMode<Format> {
   }
 
   /// Opens a new [`FileManager`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
-  pub fn create_overwrite<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), Error<Format::FormatError>>
+  pub fn create_overwrite<P: AsRef<Path>, T>(path: P, format: Format, value: T) -> Result<(T, Self), Error<Format::FormatError>>
   where Format: FileFormat<T> {
-    overwrite(path.as_ref(), &format, &item)?;
-    Ok((item, Self::open(path, format)?))
+    overwrite(path.as_ref(), &format, &value)?;
+    Ok((value, Self::open(path, format)?))
   }
 
   /// Opens a new [`FileManager`], writing the given value to the file if it does not exist.
-  pub fn create_or<P: AsRef<Path>, T>(path: P, format: Format, item: T) -> Result<(T, Self), Error<Format::FormatError>>
+  pub fn create_or<P: AsRef<Path>, T>(path: P, format: Format, value: T) -> Result<(T, Self), Error<Format::FormatError>>
   where Format: FileFormat<T> {
-    let item = read_or_write(path.as_ref(), &format, || item)?;
-    Ok((item, Self::open(path, format)?))
+    let value = read_or_write(path.as_ref(), &format, || value)?;
+    Ok((value, Self::open(path, format)?))
   }
 
   /// Opens a new [`FileManager`], writing the result of the given closure to the file if it does not exist.
   pub fn create_or_else<P: AsRef<Path>, T, C>(path: P, format: Format, closure: C) -> Result<(T, Self), Error<Format::FormatError>>
   where Format: FileFormat<T>, C: FnOnce() -> T {
-    let item = read_or_write(path.as_ref(), &format, closure)?;
-    Ok((item, Self::open(path, format)?))
+    let value = read_or_write(path.as_ref(), &format, closure)?;
+    Ok((value, Self::open(path, format)?))
   }
 
   /// Opens a new [`FileManager`], writing the default value of `T` to the file if it does not exist.
   pub fn create_or_default<P: AsRef<Path>, T>(path: P, format: Format) -> Result<(T, Self), Error<Format::FormatError>>
   where Format: FileFormat<T>, T: Default {
-    let item = read_or_write(path.as_ref(), &format, T::default)?;
-    Ok((item, Self::open(path, format)?))
+    let value = read_or_write(path.as_ref(), &format, T::default)?;
+    Ok((value, Self::open(path, format)?))
   }
 }
 

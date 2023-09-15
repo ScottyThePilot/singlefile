@@ -41,8 +41,13 @@ pub struct ContainerShared<T, Manager> {
 }
 
 impl<T, Manager> ContainerShared<T, Manager> {
+  /// Create a new [`ContainerShared`] from the value and manager directly.
+  pub fn new(value: T, manager: Manager) -> Self {
+    ContainerShared::from(Container::new(value, manager))
+  }
+
   /// Returns the inner owned [`Container`], as long as there are no other existing pointers.
-  /// Otherwise, the same [`ContainerAsync`] is returned back.
+  /// Otherwise, the same [`ContainerShared`] is returned back.
   pub fn try_unwrap(self) -> Result<Container<T, Manager>, Self> {
     match Arc::try_unwrap(self.ptr) {
       Ok(inner) => Ok(RwLock::into_inner(inner)),
@@ -125,32 +130,28 @@ where
   Mode: FileMode<Format>
 {
   /// Opens a new [`ContainerShared`], returning an error if the file at the given path does not exist.
-  #[inline]
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
   where Mode: Reading<T, Format> {
     Container::<T, _>::open(path, format).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
-  pub fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error<Format::FormatError>> {
-    Container::<T, _>::create_overwrite(path, format, item).map(From::from)
+  pub fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
+    Container::<T, _>::create_overwrite(path, format, value).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the given value to the file if it does not exist.
-  #[inline]
-  pub fn create_or<P: AsRef<Path>>(path: P, format: Format, item: T) -> Result<Self, Error<Format::FormatError>> {
-    Container::<T, _>::create_or(path, format, item).map(From::from)
+  pub fn create_or<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
+    Container::<T, _>::create_or(path, format, value).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the result of the given closure to the file if it does not exist.
-  #[inline]
   pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error<Format::FormatError>>
   where C: FnOnce() -> T {
     Container::<T, _>::create_or_else(path, format, closure).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the default value of `T` to the file if it does not exist.
-  #[inline]
   pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
   where T: Default {
     Container::<T, _>::create_or_default(path, format).map(From::from)
@@ -169,9 +170,9 @@ where Format: FileFormat<T> {
   pub fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error<Format::FormatError>>
   where Mode: Reading<T, Format>, F: FnOnce(&T, T) -> R {
     let mut guard = self.access_mut();
-    let old_item = guard.container_mut().refresh()?;
+    let old_value = guard.container_mut().refresh()?;
     let guard = AccessGuardMut::downgrade(guard);
-    Ok(operation(&guard, old_item))
+    Ok(operation(&guard, old_value))
   }
 
   /// Grants the caller mutable access to the underlying value `T`,
@@ -214,9 +215,9 @@ where Format: FileFormat<T> {
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
-  pub fn overwrite(&self, item: T) -> Result<(), Error<Format::FormatError>>
+  pub fn overwrite(&self, value: T) -> Result<(), Error<Format::FormatError>>
   where Mode: Writing<T, Format> {
-    AccessGuardMut::container_mut(&mut self.access_mut()).overwrite(item)
+    AccessGuardMut::container_mut(&mut self.access_mut()).overwrite(value)
   }
 }
 
