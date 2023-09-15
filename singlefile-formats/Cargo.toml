@@ -20,7 +20,6 @@ xz2 = { version = "0.1.7", optional = true }
 
 [dependencies.singlefile]
 path = "../singlefile"
-default-features = false
 
 [dependencies.thiserror]
 version = "1.0"

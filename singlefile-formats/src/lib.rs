@@ -187,6 +187,13 @@ pub mod json_serde {
         false => serde_json::to_writer(writer, value)
       }
     }
+
+    fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
+      match PRETTY {
+        true => serde_json::to_vec_pretty(value),
+        false => serde_json::to_vec(value)
+      }
+    }
   }
 
   /// A shortcut type to a [`Json`] with pretty-print enabled.
@@ -243,9 +250,21 @@ pub mod toml_serde {
       toml::de::from_str(&buf).map_err(From::from)
     }
 
+    #[inline]
+    fn from_reader_buffered<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
+      // no need to pass `reader` in with a `BufReader` as that would cause things to be buffered twice
+      self.from_reader(reader)
+    }
+
     fn to_writer<W: Write>(&self, mut writer: W, value: &T) -> Result<(), Self::FormatError> {
       let buf = self.to_buffer(value)?;
       writer.write_all(&buf).map_err(From::from)
+    }
+
+    #[inline]
+    fn to_writer_buffered<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
+      // no need to pass `writer` in with a `BufWriter` as that would cause things to be buffered twice
+      self.to_writer(writer, value)
     }
 
     fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
