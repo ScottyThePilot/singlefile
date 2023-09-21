@@ -134,13 +134,13 @@ impl<T, Format, Lock, Mode> ContainerSharedAsync<T, FileManager<Format, Lock, Mo
 where
   Format: FileFormat<T> + Send + 'static,
   Format::FormatError: Send + 'static,
-  Lock: FileLock + Send + 'static,
-  Mode: FileMode<Format> + Send + 'static,
+  Lock: FileLock,
+  Mode: FileMode,
   T: Send + 'static
 {
   /// Opens a new [`ContainerSharedAsync`], returning an error if the file at the given path does not exist.
   pub async fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
-  where Mode: Reading<T, Format> {
+  where Mode: Reading {
     let path = path.as_ref().to_owned();
     spawn_blocking(move || Container::<T, _>::open(path, format))
       .await.expect("blocking task failed").map(From::from)
@@ -181,8 +181,8 @@ impl<T, Format, Lock, Mode> ContainerSharedAsync<T, FileManager<Format, Lock, Mo
 where
   Format: FileFormat<T> + Send + Sync + 'static,
   Format::FormatError: Send + 'static,
-  Lock: Send + Sync + 'static,
-  Mode: Send + Sync + 'static,
+  Lock: 'static,
+  Mode: 'static,
   T: Send + Sync + 'static
 {
   /// Grants the caller immutable access to the underlying value `T`,
@@ -215,7 +215,7 @@ where
   ///
   /// This function acquires a mutable lock on the shared state.
   pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error<Format::FormatError>>
-  where Mode: Reading<T, Format>, F: FnOnce(&T, T) -> R {
+  where Mode: Reading, F: FnOnce(&T, T) -> R {
     let mut guard = self.access_owned_mut().await;
     let (old_value, guard) = spawn_blocking(move || guard.container_mut().refresh().map(|t| (t, guard)))
       .await.expect("blocking task failed")?;
@@ -229,7 +229,7 @@ where
   ///
   /// This function acquires a mutable lock on the shared state.
   pub async fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, UserError<Format::FormatError, U>>
-  where Mode: Writing<T, Format>, F: FnOnce(&mut T) -> Result<R, U> {
+  where Mode: Writing, F: FnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_owned_mut().await;
     let ret = operation(&mut guard).map_err(UserError::User)?;
     self.commit_guard(OwnedAccessGuardMut::downgrade(guard)).await?;
@@ -242,7 +242,7 @@ where
   ///
   /// This function acquires an immutable lock on the shared state.
   pub async fn refresh(&self) -> Result<T, Error<Format::FormatError>>
-  where Mode: Reading<T, Format> {
+  where Mode: Reading {
     let mut guard = self.access_owned_mut().await;
     spawn_blocking(move || guard.container_mut().refresh())
       .await.expect("blocking task failed")
@@ -253,7 +253,7 @@ where
   /// This function acquires an immutable lock on the shared state.
   /// Don't call this if you currently have an access guard, use [`ContainerSharedAsync::commit_guard`] instead.
   pub async fn commit(&self) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing<T, Format> {
+  where Mode: Writing {
     let guard = self.access_owned().await;
     self.commit_guard(guard).await
   }
@@ -261,14 +261,14 @@ where
   /// Writes to the managed file given an access guard.
   pub async fn commit_guard(&self, guard: OwnedAccessGuard<T, FileManager<Format, Lock, Mode>>)
   -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing<T, Format> {
+  where Mode: Writing {
     spawn_blocking(move || guard.container().commit())
       .await.expect("blocking task failed")
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
   pub async fn overwrite(&self, value: T) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing<T, Format> {
+  where Mode: Writing {
     let mut guard = self.access_owned_mut().await;
     spawn_blocking(move || guard.container_mut().overwrite(value))
       .await.expect("blocking task failed")

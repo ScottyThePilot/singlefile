@@ -133,11 +133,11 @@ impl<T, Format, Lock, Mode> ContainerShared<T, FileManager<Format, Lock, Mode>>
 where
   Format: FileFormat<T>,
   Lock: FileLock,
-  Mode: FileMode<Format>
+  Mode: FileMode
 {
   /// Opens a new [`ContainerShared`], returning an error if the file at the given path does not exist.
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
-  where Mode: Reading<T, Format> {
+  where Mode: Reading {
     Container::<T, _>::open(path, format).map(From::from)
   }
 
@@ -174,7 +174,7 @@ where Format: FileFormat<T> {
   ///
   /// This function acquires a mutable lock on the shared state.
   pub fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error<Format::FormatError>>
-  where Mode: Reading<T, Format>, F: FnOnce(&T, T) -> R {
+  where Mode: Reading, F: FnOnce(&T, T) -> R {
     let mut guard = self.access_mut();
     let old_value = guard.container_mut().refresh()?;
     let guard = AccessGuardMut::downgrade(guard);
@@ -187,7 +187,7 @@ where Format: FileFormat<T> {
   ///
   /// This function acquires a mutable lock on the shared state.
   pub fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, UserError<Format::FormatError, U>>
-  where Mode: Writing<T, Format>, F: FnOnce(&mut T) -> Result<R, U> {
+  where Mode: Writing, F: FnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_mut();
     let ret = operation(&mut guard).map_err(UserError::User)?;
     self.commit_guard(AccessGuardMut::downgrade(guard))?;
@@ -200,7 +200,7 @@ where Format: FileFormat<T> {
   ///
   /// This function acquires an immutable lock on the shared state.
   pub fn refresh(&self) -> Result<T, Error<Format::FormatError>>
-  where Mode: Reading<T, Format> {
+  where Mode: Reading {
     AccessGuardMut::container_mut(&mut self.access_mut()).refresh()
   }
 
@@ -209,20 +209,20 @@ where Format: FileFormat<T> {
   /// This function acquires an immutable lock on the shared state.
   /// Don't call this if you currently have an access guard, use [`ContainerShared::commit_guard`] instead.
   pub fn commit(&self) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing<T, Format> {
+  where Mode: Writing {
     AccessGuard::container(&self.access()).commit()
   }
 
   /// Writes to the managed file given an access guard.
   pub fn commit_guard(&self, guard: AccessGuard<'_, T, FileManager<Format, Lock, Mode>>)
   -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing<T, Format> {
+  where Mode: Writing {
     AccessGuard::container(&guard).commit()
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
   pub fn overwrite(&self, value: T) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing<T, Format> {
+  where Mode: Writing {
     AccessGuardMut::container_mut(&mut self.access_mut()).overwrite(value)
   }
 }

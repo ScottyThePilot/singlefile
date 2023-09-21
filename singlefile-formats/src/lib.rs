@@ -240,6 +240,7 @@ pub mod toml_serde {
   #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
   pub struct Toml<const PRETTY: bool = true>;
 
+  /// Since the [`toml`] crate exposes no writer-based operations, all operations within this implementation are buffered.
   impl<T, const PRETTY: bool> FileFormat<T> for Toml<PRETTY>
   where T: Serialize + DeserializeOwned {
     type FormatError = TomlError;

@@ -2,6 +2,7 @@
 
 use crate::error::Error;
 use crate::manager::format::FileFormat;
+use crate::sealed::Sealed;
 
 use std::fs::{File, OpenOptions};
 use std::io::{self, Seek, SeekFrom};
@@ -10,53 +11,52 @@ use std::path::Path;
 
 
 /// Describes a mode by which a `FileManager` can manipulate a file.
-pub trait FileMode<Format>: From<Format> {
+pub trait FileMode: Sealed + Send + Sync + 'static {
   /// Whether this file mode reads from files.
-  /// If this is true, this type should implement [`Reading`], otherwise it should not.
   const READABLE: bool;
   /// Whether this file mode writes to files.
-  /// If this is true, this type should implement [`Writing`], otherwise it should not.
   const WRITABLE: bool;
+
+  /// Open a new file with this file mode.
+  fn open<P: AsRef<Path>>(path: P) -> io::Result<File> {
+    OpenOptions::new()
+      .read(Self::READABLE)
+      .write(Self::WRITABLE)
+      .open(path)
+  }
 }
 
 /// Extends `FileMode`, adding the ability to read from files.
-pub trait Reading<T, Format>: FileMode<Format>
-where Format: FileFormat<T> {
+pub trait Reading: FileMode {
   /// Read a value from the file.
-  fn read(&self, file: &File) -> Result<T, Error<Format::FormatError>>;
+  #[inline]
+  fn read<T, Format>(format: &Format, file: &File) -> Result<T, Error<Format::FormatError>>
+  where Format: FileFormat<T> {
+    read(format, file)
+  }
 }
 
 /// Extends `FileMode`, adding the ability to write to files.
-pub trait Writing<T, Format>: FileMode<Format>
-where Format: FileFormat<T> {
+pub trait Writing: FileMode {
   /// Write a value to the file.
-  fn write(&self, file: &File, value: &T) -> Result<(), Error<Format::FormatError>>;
+  #[inline]
+  fn write<T, Format>(format: &Format, file: &File, value: &T) -> Result<(), Error<Format::FormatError>>
+  where Format: FileFormat<T> {
+    write(format, file, value)
+  }
 }
 
 
 
 /// A file mode that only allows reading from files.
-#[derive(Debug, Clone, Default)]
-pub struct Readonly<Format> {
-  format: Format
-}
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Readonly;
 
-impl<Format> From<Format> for Readonly<Format> {
-  #[inline(always)]
-  fn from(format: Format) -> Readonly<Format> {
-    Readonly { format }
-  }
-}
+impl Sealed for Readonly {}
 
-impl<T, Format> Reading<T, Format> for Readonly<Format>
-where Format: FileFormat<T> {
-  #[inline]
-  fn read(&self, file: &File) -> Result<T, Error<Format::FormatError>> {
-    read(&self.format, file)
-  }
-}
+impl Reading for Readonly {}
 
-impl<Format> FileMode<Format> for Readonly<Format> {
+impl FileMode for Readonly {
   const READABLE: bool = true;
   const WRITABLE: bool = false;
 }
@@ -64,35 +64,16 @@ impl<Format> FileMode<Format> for Readonly<Format> {
 
 
 /// A file mode that allows reading and writing to files.
-#[derive(Debug, Clone, Default)]
-pub struct Writable<Format> {
-  format: Format
-}
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Writable;
 
-impl<Format> From<Format> for Writable<Format> {
-  #[inline(always)]
-  fn from(format: Format) -> Writable<Format> {
-    Writable { format }
-  }
-}
+impl Sealed for Writable {}
 
-impl<T, Format> Reading<T, Format> for Writable<Format>
-where Format: FileFormat<T> {
-  #[inline]
-  fn read(&self, file: &File) -> Result<T, Error<Format::FormatError>> {
-    read(&self.format, file)
-  }
-}
+impl Reading for Writable {}
 
-impl<T, Format> Writing<T, Format> for Writable<Format>
-where Format: FileFormat<T> {
-  #[inline]
-  fn write(&self, file: &File, value: &T) -> Result<(), Error<Format::FormatError>> {
-    write(&self.format, file, value)
-  }
-}
+impl Writing for Writable {}
 
-impl<Format> FileMode<Format> for Writable<Format> {
+impl FileMode for Writable {
   const READABLE: bool = true;
   const WRITABLE: bool = true;
 }
@@ -104,48 +85,27 @@ impl<Format> FileMode<Format> for Writable<Format> {
 /// buffered in memory during a write.
 ///
 /// This does not however prevent the possibility of race-condition write corruption.
-#[derive(Debug, Clone, Default)]
-pub struct Atomic<Format> {
-  format: Format
-}
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Atomic;
 
-impl<Format> From<Format> for Atomic<Format> {
-  #[inline(always)]
-  fn from(format: Format) -> Atomic<Format> {
-    Atomic { format }
-  }
-}
+impl Sealed for Atomic {}
 
-impl<T, Format> Reading<T, Format> for Atomic<Format>
-where Format: FileFormat<T> {
+impl Reading for Atomic {}
+
+impl Writing for Atomic {
   #[inline]
-  fn read(&self, file: &File) -> Result<T, Error<Format::FormatError>> {
-    read(&self.format, file)
+  fn write<T, Format>(format: &Format, file: &File, value: &T) -> Result<(), Error<Format::FormatError>>
+  where Format: FileFormat<T> {
+    write_atomic(format, file, value)
   }
 }
 
-impl<T, Format> Writing<T, Format> for Atomic<Format>
-where Format: FileFormat<T> {
-  #[inline]
-  fn write(&self, file: &File, value: &T) -> Result<(), Error<Format::FormatError>> {
-    write_atomic(&self.format, file, value)
-  }
-}
-
-impl<Format> FileMode<Format> for Atomic<Format> {
+impl FileMode for Atomic {
   const READABLE: bool = true;
   const WRITABLE: bool = true;
 }
 
 
-
-pub(crate) fn open<Mode, Format>(path: &Path) -> io::Result<File>
-where Mode: FileMode<Format> {
-  OpenOptions::new()
-    .read(Mode::READABLE)
-    .write(Mode::WRITABLE)
-    .open(path)
-}
 
 pub(crate) fn read<T, Format>(
   format: &Format, mut file: &File

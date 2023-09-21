@@ -76,10 +76,10 @@ impl<T, Manager> Container<T, Manager> {
 }
 
 impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
-where Format: FileFormat<T>, Lock: FileLock, Mode: FileMode<Format> {
+where Format: FileFormat<T>, Lock: FileLock, Mode: FileMode {
   /// Opens a new [`Container`], returning an error if the file at the given path does not exist.
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
-  where Mode: Reading<T, Format> {
+  where Mode: Reading {
     let manager = FileManager::open(path, format)?;
     let value = manager.read()?;
     Ok(Container { value: value, manager })
@@ -116,19 +116,19 @@ impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
 where Format: FileFormat<T> {
   /// Reads a value from the managed file, replacing the current state in memory.
   pub fn refresh(&mut self) -> Result<T, Error<Format::FormatError>>
-  where Mode: Reading<T, Format> {
+  where Mode: Reading {
     self.manager.read().map(|value| std::mem::replace(&mut self.value, value))
   }
 
   /// Writes the current in-memory state to the managed file.
   pub fn commit(&self) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing<T, Format> {
+  where Mode: Writing {
     self.manager.write(&self.value)
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
   pub fn overwrite(&mut self, value: T) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing<T, Format> {
+  where Mode: Writing {
     self.value = value;
     self.manager.write(&self.value)
   }

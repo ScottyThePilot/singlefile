@@ -1,12 +1,14 @@
 //! Defines different types of file system locks.
 
+use crate::sealed::Sealed;
+
 use std::fs::File;
 use std::io;
 
 
 
 /// Describes a mode by which a file can be locked or unlocked.
-pub trait FileLock {
+pub trait FileLock: Sealed + Send + Sync + 'static {
   /// Locks the file.
   fn lock(file: &File) -> io::Result<()>;
 
@@ -19,6 +21,8 @@ pub trait FileLock {
 /// A file lock mode that does not lock the file.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NoLock;
+
+impl Sealed for NoLock {}
 
 impl FileLock for NoLock {
   #[inline(always)]
@@ -38,6 +42,8 @@ impl FileLock for NoLock {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct SharedLock;
 
+impl Sealed for SharedLock {}
+
 impl FileLock for SharedLock {
   #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
@@ -55,6 +61,8 @@ impl FileLock for SharedLock {
 /// A file lock mode that locks the file for exclusive access.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct ExclusiveLock;
+
+impl Sealed for ExclusiveLock {}
 
 impl FileLock for ExclusiveLock {
   #[inline(always)]

@@ -39,18 +39,36 @@ pub trait FileFormat<T> {
   type FormatError: std::error::Error;
 
   /// Deserialize a value from a `Read` stream.
+  ///
+  /// If you are reading directly from a [`File`][std::fs::File], you should consider
+  /// using [`from_reader_buffered`][FileFormat::from_reader_buffered] instead.
   fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError>;
 
   /// Identical to [`FileFormat::from_reader`], however the provided reader is buffered with [`BufReader`].
+  ///
+  /// You should override this function if your file format reads
+  /// to a buffer internally in order to avoid double-buffering.
   #[inline]
   fn from_reader_buffered<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
     self.from_reader(BufReader::new(reader))
   }
 
+  /// Deserialize a value from a byte vec.
+  #[inline]
+  fn from_buffer(&self, buf: &[u8]) -> Result<T, Self::FormatError> {
+    self.from_reader(buf)
+  }
+
   /// Serialize a value into a `Write` stream.
+  ///
+  /// If you are writing directly to a [`File`][std::fs::File], you should consider
+  /// using [`to_writer_buffered`][FileFormat::to_writer_buffered] instead.
   fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError>;
 
   /// Identical to [`FileFormat::to_writer`], however the provided writer is buffered with [`BufWriter`].
+  ///
+  /// You should override this function if your file format writes
+  /// to a buffer internally in order to avoid double-buffering.
   #[inline]
   fn to_writer_buffered<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
     self.to_writer(BufWriter::new(writer), value)
@@ -64,17 +82,40 @@ pub trait FileFormat<T> {
   }
 }
 
-impl<T, Format> FileFormat<T> for &Format
-where Format: FileFormat<T> {
-  type FormatError = <Format as FileFormat<T>>::FormatError;
+macro_rules! impl_file_format_delegate {
+  (<$Format:ident> $Type:ty) => (
+    impl<T, $Format: FileFormat<T>> FileFormat<T> for $Type {
+      type FormatError = <$Format as FileFormat<T>>::FormatError;
 
-  #[inline]
-  fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
-    Format::to_writer(self, writer, value)
-  }
+      #[inline]
+      fn from_reader_buffered<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
+        $Format::from_reader_buffered(self, reader)
+      }
 
-  #[inline]
-  fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
-    Format::from_reader(self, reader)
-  }
+      #[inline]
+      fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
+        $Format::from_reader(self, reader)
+      }
+
+      #[inline]
+      fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
+        $Format::to_writer(self, writer, value)
+      }
+
+      #[inline]
+      fn to_writer_buffered<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
+        $Format::to_writer_buffered(self, writer, value)
+      }
+
+      #[inline]
+      fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
+        $Format::to_buffer(self, value)
+      }
+    }
+  );
 }
+
+impl_file_format_delegate!(<Format> &Format);
+impl_file_format_delegate!(<Format> std::boxed::Box<Format>);
+impl_file_format_delegate!(<Format> std::rc::Rc<Format>);
+impl_file_format_delegate!(<Format> std::sync::Arc<Format>);

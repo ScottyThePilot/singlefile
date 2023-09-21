@@ -29,22 +29,22 @@ use std::os::windows::io::{IntoRawHandle, AsRawHandle, RawHandle};
 /// This includes file format, file locking mode, and file access mode.
 #[derive(Debug)]
 pub struct FileManager<Format, Lock, Mode> {
-  format: PhantomData<Format>,
+  format: Format,
   lock: PhantomData<Lock>,
-  mode: Mode,
+  mode: PhantomData<Mode>,
   file: File
 }
 
 impl<Format, Lock, Mode> FileManager<Format, Lock, Mode>
-where Lock: FileLock, Mode: FileMode<Format> {
+where Lock: FileLock, Mode: FileMode {
   /// Opens a new [`FileManager`], returning an error if the file at the given path does not exist.
   pub fn open<P: AsRef<Path>>(path: P, format: Format) -> io::Result<Self> {
-    let file = self::mode::open::<Mode, Format>(path.as_ref())?;
+    let file = Mode::open(path)?;
     Lock::lock(&file)?;
     Ok(FileManager {
-      format: PhantomData,
+      format,
       lock: PhantomData,
-      mode: Mode::from(format),
+      mode: PhantomData,
       file
     })
   }
@@ -86,23 +86,34 @@ where Lock: FileLock {
     self.file.sync_all()?;
     Ok(())
   }
+
+  /// Unlocks and closes this [`FileManager`], returning the [`FileFormat`] that it uses.
+  pub fn into_inner(self) -> io::Result<Format> {
+    Lock::unlock(&self.file)?;
+    self.file.sync_all()?;
+    Ok(self.format)
+  }
 }
 
 impl<Format, Lock, Mode> FileManager<Format, Lock, Mode> {
   /// Writes a given value to the file managed by this manager.
   #[inline]
   pub fn write<T>(&self, value: &T) -> Result<(), Error<Format::FormatError>>
-  where Format: FileFormat<T>, Mode: Writing<T, Format> {
-    self.mode.write(&self.file, value)
+  where Format: FileFormat<T>, Mode: Writing {
+    Mode::write(&self.format, &self.file, value)
   }
 
   /// Reads a value from the file managed by this manager.
   #[inline]
   pub fn read<T>(&self) -> Result<T, Error<Format::FormatError>>
-  where Format: FileFormat<T>, Mode: Reading<T, Format> {
-    self.mode.read(&self.file)
+  where Format: FileFormat<T>, Mode: Reading {
+    Mode::read(&self.format, &self.file)
   }
 }
+
+// SAFETY: `Lock` and `Mode` do not really exist within `FileManager`, they are `PhantomData`.
+unsafe impl<Format: Send, Lock, Mode> Send for FileManager<Format, Lock, Mode> {}
+unsafe impl<Format: Sync, Lock, Mode> Sync for FileManager<Format, Lock, Mode> {}
 
 #[cfg(unix)]
 impl<Format, Lock, Mode> IntoRawFd for FileManager<Format, Lock, Mode> {
@@ -133,19 +144,19 @@ impl<Format, Lock, Mode> AsRawHandle for FileManager<Format, Lock, Mode> {
 }
 
 /// Type alias to a file manager that is read-only, and has no file lock.
-pub type ManagerReadonly<Format> = FileManager<Format, NoLock, Readonly<Format>>;
+pub type ManagerReadonly<Format> = FileManager<Format, NoLock, Readonly>;
 /// Type alias to a file manager that is readable and writable, and has no file lock.
-pub type ManagerWritable<Format> = FileManager<Format, NoLock, Writable<Format>>;
+pub type ManagerWritable<Format> = FileManager<Format, NoLock, Writable>;
 /// Type alias to a file manager that is readable and writable (with atomic writes), and has no file lock.
 /// See [`Atomic`] for more information.
-pub type ManagerAtomic<Format> = FileManager<Format, NoLock, Atomic<Format>>;
+pub type ManagerAtomic<Format> = FileManager<Format, NoLock, Atomic>;
 /// Type alias to a file manager that is read-only, and has a shared file lock.
-pub type ManagerReadonlyLocked<Format> = FileManager<Format, SharedLock, Readonly<Format>>;
+pub type ManagerReadonlyLocked<Format> = FileManager<Format, SharedLock, Readonly>;
 /// Type alias to a file manager that is readable and writable, and has an exclusive file lock.
-pub type ManagerWritableLocked<Format> = FileManager<Format, ExclusiveLock, Writable<Format>>;
+pub type ManagerWritableLocked<Format> = FileManager<Format, ExclusiveLock, Writable>;
 /// Type alias to a file manager that is readable and writable (with atomic writes), and has an exclusive file lock.
 /// See [`Atomic`] for more information.
-pub type ManagerAtomicLocked<Format> = FileManager<Format, ExclusiveLock, Atomic<Format>>;
+pub type ManagerAtomicLocked<Format> = FileManager<Format, ExclusiveLock, Atomic>;
 
 fn read_or_write<T, C, Format>(path: &Path, format: &Format, closure: C) -> Result<T, Error<Format::FormatError>>
 where Format: FileFormat<T>, C: FnOnce() -> T {
