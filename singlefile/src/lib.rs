@@ -1,5 +1,4 @@
-//! This library is designed to be a dead-simple way of accessing and manipulating files,
-//! treating those files as if they represent some Rust value.
+//! This library is designed to be a dead-simple way of reading and writing your rust values to and from disk.
 //!
 //! ## Usage
 //! `singlefile` provides a generic [`Container`] type, along with type alias variants for different use cases.
@@ -17,7 +16,7 @@
 //! }
 //!
 //! // Attempts to open 'my_data.json', creating it from default if it does not exist,
-//! // expecting data that the `Json` format can decode into `MyData`.
+//! // expecting data that the `Json` format can decode into `MyData`
 //! let mut my_container = ContainerWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
 //! // For regular `Container`s, `Deref` and `DerefMut` can be used to access the contained type
 //! println!("magic_number: {}", my_container.magic_number); // 0 (as long as the file didn't exist before)
@@ -97,7 +96,16 @@
 //! }
 //! ```
 //!
-//! Alternatively, you can use one of the preset file formats provided by `singlefile-formats`.
+//! Alternatively, you can use one of the preset file formats provided by
+//! [`singlefile-formats`](https://crates.io/crates/singlefile-formats).
+//!
+//! ## Features
+//! By default, only the `tokio-parking-lot` feature is enabled.
+//!
+//! - `shared`: Enables [`ContainerShared`], pulling in `parking_lot`.
+//! - `shared-async`: Enables [`ContainerSharedAsync`], pulling in `tokio` and (by default) `parking_lot`.
+//! - `deadlock-detection`: Enables `parking_lot`'s `deadlock_detection` feature, if it is present.
+//! - `tokio-parking-lot`: Enables `parking_lot` for use in `tokio`, if it is present. Enabled by default.
 //!
 //! [`Container`]: crate::container::Container
 //! [`ContainerShared`]: crate::container_shared::ContainerShared

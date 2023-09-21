@@ -1,6 +1,6 @@
 [package]
 name = "singlefile"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 description = "Dead simple file data manipulation."
 documentation = "https://docs.rs/singlefile"
@@ -32,7 +32,6 @@ tempfile = "3.8"
 # by default, tokio will use parking_lot
 default = ["tokio-parking-lot"]
 
-async = ["dep:tokio"]
 shared = ["dep:parking_lot", "tokio?/parking_lot"]
 shared-async = ["dep:tokio", "tokio?/sync"]
 

@@ -1,17 +1,23 @@
 # SingleFile
-[![Crate](https://img.shields.io/crates/v/singlefile.svg)](https://crates.io/crates/singlefile)
-[![Documentation](https://docs.rs/singlefile/badge.svg)](https://docs.rs/singlefile)
 
-This library is designed to be a dead-simple way of accessing and manipulating files,
-treating those files as if they represent some Rust value.
+This library is designed to be a dead-simple way of reading and writing your rust values to and from disk.
+It greatly reduces the boilerplate necessary for using simple config files or basic JSON datastores.
 
-## Usage
-`singlefile` provides a generic `Container` type, along with type alias variants for different use cases.
-`Container` is named so to indicate that it contains and manages a file and a value.
+See the docs for each crate for more info:
+
+Crate name           | Crates.io page                         | Docs.rs page
+---------------------|----------------------------------------|-------------------------------------------
+`singlefile`         | [![Crate][crates-img-1]][crates-url-1] | [![Documentation][docs-img-1]][docs-url-1]
+`singlefile-formats` | [![Crate][crates-img-2]][crates-url-2] | [![Documentation][docs-img-2]][docs-url-2]
+
+## Example
 
 ```rust
+// A JSON file format, utilizing serde
+use singlefile_formats::json_serde::Json;
 // A readable, writable container
 use singlefile::container::ContainerWritable;
+use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Default)]
 struct MyData {
@@ -19,7 +25,7 @@ struct MyData {
 }
 
 // Attempts to open 'my_data.json', creating it from default if it does not exist,
-// expecting data that the `Json` format can decode into `MyData`.
+// expecting data that the `Json` format can decode into `MyData`
 let mut my_container = ContainerWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
 // For regular `Container`s, `Deref` and `DerefMut` can be used to access the contained type
 println!("magic_number: {}", my_container.magic_number); // 0 (as long as the file didn't exist before)
@@ -28,64 +34,12 @@ my_container.magic_number += 1;
 my_container.commit()?;
 ```
 
-We'd then expect the resulting `my_data.json` to look like:
+[crates-img-1]: https://img.shields.io/crates/v/singlefile.svg
+[crates-img-2]: https://img.shields.io/crates/v/singlefile-formats.svg
+[crates-url-1]: https://crates.io/crates/singlefile
+[crates-url-2]: https://crates.io/crates/singlefile-formats
 
-```json
-{
-  "magic_number": 1
-}
-```
-
-## Shared and async containers
-`singlefile` also provides a `ContainerShared` type that can be used from multiple threads, as well as
-a `ContainerSharedAsync` that can be used from multiple threads and spawns its operations asynchronously.
-Currently, `ContainerSharedAsync` can only be guaranteed to work alongside Tokio.
-
-The shared container types can be enabled with the `shared` cargo feature.
-The async container types can be enabled with the `shared-async` cargo feature.
-
-```rust
-// A readable, writable container with multiple-ownership
-use singlefile::container_shared::ContainerSharedWritable;
-
-// `ContainerShared` types may be cloned cheaply, they behave like `Arc`s
-let my_container = ContainerSharedWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
-
-// Get access to the contained `MyData`, increment it, and commit changes to disk
-std::thread::spawn(move || {
-  my_container.operate_mut_commit(|my_data| {
-    my_data.magic_number += 1;
-    Ok::<(), Infallible>(())
-  });
-});
-```
-
-## File formats
-`singlefile` is serialization framework-agnostic, so you will need a `FileFormat` adapter
-before you are able to read and write a given file format to disk.
-
-Here is how you'd write a `Json` adapter for the above examples, using `serde`.
-
-```rust
-use serde::ser::Serialize;
-use serde::de::DeserializeOwned;
-use singlefile::FileFormat;
-use std::io::{Read, Write};
-
-struct Json;
-
-impl<T> FileFormat<T> for Json
-where T: Serialize + DeserializeOwned {
-  type FormatError = serde_json::Error;
-
-  fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
-    serde_json::to_writer_pretty(writer, value).map_err(From::from)
-  }
-
-  fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
-    serde_json::from_reader(reader).map_err(From::from)
-  }
-}
-```
-
-Alternatively, you can use one of the preset file formats provided by `singlefile-formats`.
+[docs-img-1]: https://docs.rs/singlefile/badge.svg
+[docs-img-2]: https://docs.rs/singlefile-formats/badge.svg
+[docs-url-1]: https://docs.rs/singlefile
+[docs-url-2]: https://docs.rs/singlefile-formats
