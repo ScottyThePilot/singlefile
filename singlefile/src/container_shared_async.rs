@@ -18,7 +18,6 @@ pub use self::guards::{
 };
 
 use tokio::sync::RwLock;
-use tokio::task::spawn_blocking;
 
 use std::path::Path;
 use std::sync::Arc;
@@ -37,6 +36,10 @@ pub type ContainerSharedAsyncWritableLocked<T, Format> = ContainerSharedAsync<T,
 /// Type alias to a shared, asynchronous, thread-safe container that is readable and writable (with atomic writes), and has an exclusive file lock.
 /// See [`Atomic`] for more information.
 pub type ContainerSharedAsyncAtomicLocked<T, Format> = ContainerSharedAsync<T, ManagerAtomicLocked<Format>>;
+
+macro_rules! spawn_blocking {
+  ($expr:expr) => (tokio::task::spawn_blocking(move || $expr).await.expect("blocking task failed"));
+}
 
 /// A container that allows asynchronous atomic reference-counted, mutable access (gated by an [`RwLock`]) to the
 /// underlying file and contents. Cloning this container will not clone the underlying contents, it will clone the
@@ -117,6 +120,8 @@ impl<T, Manager> ContainerSharedAsync<T, Manager> {
 
   /// Grants the caller immutable access to the underlying value `T`,
   /// but only for the duration of the provided function or closure.
+  ///
+  /// This function acquires an immutable lock on the shared state.
   pub async fn operate<F, R>(&self, operation: F) -> R
   where F: FnOnce(&T) -> R {
     operation(&*self.access().await)
@@ -124,6 +129,8 @@ impl<T, Manager> ContainerSharedAsync<T, Manager> {
 
   /// Grants the caller mutable access to the underlying value `T`,
   /// but only for the duration of the provided function or closure.
+  ///
+  /// This function acquires a mutable lock on the shared state.
   pub async fn operate_mut<F, R>(&self, operation: F) -> R
   where F: FnOnce(&mut T) -> R {
     operation(&mut *self.access_mut().await)
@@ -142,38 +149,33 @@ where
   pub async fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
   where Mode: Reading {
     let path = path.as_ref().to_owned();
-    spawn_blocking(move || Container::<T, _>::open(path, format))
-      .await.expect("blocking task failed").map(From::from)
+    spawn_blocking!(Container::<T, _>::open(path, format)).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
   pub async fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
     let path = path.as_ref().to_owned();
-    spawn_blocking(move || Container::<T, _>::create_overwrite(path, format, value))
-      .await.expect("blocking task failed").map(From::from)
+    spawn_blocking!(Container::<T, _>::create_overwrite(path, format, value)).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], writing the given value to the file if it does not exist.
   pub async fn create_or<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
     let path = path.as_ref().to_owned();
-    spawn_blocking(move || Container::<T, _>::create_or(path, format, value))
-      .await.expect("blocking task failed").map(From::from)
+    spawn_blocking!(Container::<T, _>::create_or(path, format, value)).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], writing the result of the given closure to the file if it does not exist.
   pub async fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error<Format::FormatError>>
   where C: FnOnce() -> T + Send + 'static {
     let path = path.as_ref().to_owned();
-    spawn_blocking(move || Container::<T, _>::create_or_else(path, format, closure))
-      .await.expect("blocking task failed").map(From::from)
+    spawn_blocking!(Container::<T, _>::create_or_else(path, format, closure)).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], writing the default value of `T` to the file if it does not exist.
   pub async fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
   where T: Default {
     let path = path.as_ref().to_owned();
-    spawn_blocking(move || Container::<T, _>::create_or_default(path, format))
-      .await.expect("blocking task failed").map(From::from)
+    spawn_blocking!(Container::<T, _>::create_or_default(path, format)).map(From::from)
   }
 }
 
@@ -192,8 +194,7 @@ where
   pub async fn operate_nonblocking<F, R>(&self, operation: F) -> R
   where F: FnOnce(&T) -> R + Send + 'static, R: Send + 'static {
     let guard = self.access_owned().await;
-    spawn_blocking(move || operation(&guard))
-      .await.expect("blocking task failed")
+    spawn_blocking!(operation(&guard))
   }
 
   /// Grants the caller mutable access to the underlying value `T`,
@@ -203,8 +204,7 @@ where
   pub async fn operate_mut_nonblocking<F, R>(&self, operation: F) -> R
   where F: FnOnce(&mut T) -> R + Send + 'static, R: Send + 'static {
     let mut guard = self.access_owned_mut().await;
-    spawn_blocking(move || operation(&mut guard))
-      .await.expect("blocking task failed")
+    spawn_blocking!(operation(&mut guard))
   }
 
   /// Reads a value from the managed file, replacing the current state in memory,
@@ -217,8 +217,7 @@ where
   pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error<Format::FormatError>>
   where Mode: Reading, F: FnOnce(&T, T) -> R {
     let mut guard = self.access_owned_mut().await;
-    let (old_value, guard) = spawn_blocking(move || guard.container_mut().refresh().map(|t| (t, guard)))
-      .await.expect("blocking task failed")?;
+    let (old_value, guard) = spawn_blocking!(guard.container_mut().refresh().map(|t| (t, guard)))?;
     let guard = OwnedAccessGuardMut::downgrade(guard);
     Ok(operation(&guard, old_value))
   }
@@ -240,12 +239,11 @@ where
   ///
   /// Returns the value of the previous state if the operation succeeded.
   ///
-  /// This function acquires an immutable lock on the shared state.
+  /// This function acquires a mutable lock on the shared state.
   pub async fn refresh(&self) -> Result<T, Error<Format::FormatError>>
   where Mode: Reading {
     let mut guard = self.access_owned_mut().await;
-    spawn_blocking(move || guard.container_mut().refresh())
-      .await.expect("blocking task failed")
+    spawn_blocking!(guard.container_mut().refresh())
   }
 
   /// Writes the current in-memory state to the managed file.
@@ -262,16 +260,14 @@ where
   pub async fn commit_guard(&self, guard: OwnedAccessGuard<T, FileManager<Format, Lock, Mode>>)
   -> Result<(), Error<Format::FormatError>>
   where Mode: Writing {
-    spawn_blocking(move || guard.container().commit())
-      .await.expect("blocking task failed")
+    spawn_blocking!(guard.container().commit())
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
   pub async fn overwrite(&self, value: T) -> Result<(), Error<Format::FormatError>>
   where Mode: Writing {
     let mut guard = self.access_owned_mut().await;
-    spawn_blocking(move || guard.container_mut().overwrite(value))
-      .await.expect("blocking task failed")
+    spawn_blocking!(guard.container_mut().overwrite(value))
   }
 }
 

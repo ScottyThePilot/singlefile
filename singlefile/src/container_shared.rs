@@ -116,6 +116,8 @@ impl<T, Manager> ContainerShared<T, Manager> {
 
   /// Grants the caller immutable access to the underlying value `T`,
   /// but only for the duration of the provided function or closure.
+  ///
+  /// This function acquires an immutable lock on the shared state.
   pub fn operate<F, R>(&self, operation: F) -> R
   where F: FnOnce(&T) -> R {
     operation(&*self.access())
@@ -123,6 +125,8 @@ impl<T, Manager> ContainerShared<T, Manager> {
 
   /// Grants the caller mutable access to the underlying value `T`,
   /// but only for the duration of the provided function or closure.
+  ///
+  /// This function acquires a mutable lock on the shared state.
   pub fn operate_mut<F, R>(&self, operation: F) -> R
   where F: FnOnce(&mut T) -> R {
     operation(&mut *self.access_mut())
@@ -198,7 +202,7 @@ where Format: FileFormat<T> {
   ///
   /// Returns the value of the previous state if the operation succeeded.
   ///
-  /// This function acquires an immutable lock on the shared state.
+  /// This function acquires a mutable lock on the shared state.
   pub fn refresh(&self) -> Result<T, Error<Format::FormatError>>
   where Mode: Reading {
     AccessGuardMut::container_mut(&mut self.access_mut()).refresh()
