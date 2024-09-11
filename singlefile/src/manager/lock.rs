@@ -47,12 +47,12 @@ impl Sealed for SharedLock {}
 impl FileLock for SharedLock {
   #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
-    fs4::FileExt::try_lock_shared(file)
+    fs4::fs_std::FileExt::try_lock_shared(file)
   }
 
   #[inline(always)]
   fn unlock(file: &File) -> io::Result<()> {
-    fs4::FileExt::unlock(file)
+    fs4::fs_std::FileExt::unlock(file)
   }
 }
 
@@ -67,11 +67,11 @@ impl Sealed for ExclusiveLock {}
 impl FileLock for ExclusiveLock {
   #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
-    fs4::FileExt::try_lock_exclusive(file)
+    fs4::fs_std::FileExt::try_lock_exclusive(file)
   }
 
   #[inline(always)]
   fn unlock(file: &File) -> io::Result<()> {
-    fs4::FileExt::unlock(file)
+    fs4::fs_std::FileExt::unlock(file)
   }
 }

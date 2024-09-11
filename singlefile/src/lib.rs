@@ -123,7 +123,9 @@
 
 extern crate fs4;
 extern crate thiserror;
-#[cfg(feature = "tokio")]
+#[cfg(feature = "shared")]
+extern crate parking_lot;
+#[cfg(feature = "shared-async")]
 extern crate tokio;
 
 pub mod container;

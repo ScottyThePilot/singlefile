@@ -82,33 +82,33 @@ where Format: FileFormat<T>, Lock: FileLock, Mode: FileMode {
   where Mode: Reading {
     let manager = FileManager::open(path, format)?;
     let value = manager.read()?;
-    Ok(Container { value: value, manager })
+    Ok(Container { value, manager })
   }
 
   /// Opens a new [`Container`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
   pub fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
     let (value, manager) = FileManager::create_overwrite(path, format, value)?;
-    Ok(Container { value: value, manager })
+    Ok(Container { value, manager })
   }
 
   /// Opens a new [`Container`], writing the given value to the file if it does not exist.
   pub fn create_or<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
     let (value, manager) = FileManager::create_or(path, format, value)?;
-    Ok(Container { value: value, manager })
+    Ok(Container { value, manager })
   }
 
   /// Opens a new [`Container`], writing the result of the given closure to the file if it does not exist.
   pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error<Format::FormatError>>
   where C: FnOnce() -> T {
     let (value, manager) = FileManager::create_or_else(path, format, closure)?;
-    Ok(Container { value: value, manager })
+    Ok(Container { value, manager })
   }
 
   /// Opens a new [`Container`], writing the default value of `T` to the file if it does not exist.
   pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
   where T: Default {
     let (value, manager) = FileManager::create_or_default(path, format)?;
-    Ok(Container { value: value, manager })
+    Ok(Container { value, manager })
   }
 }
 
