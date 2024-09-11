@@ -133,9 +133,9 @@ pub(crate) fn write_atomic<T, Format>(
   format: &Format, mut file: &File, value: &T
 ) -> Result<(), Error<Format::FormatError>>
 where Format: FileFormat<T> {
-  file.set_len(0)?;
   let buf = format.to_buffer(value)
     .map_err(Error::Format)?;
+  file.set_len(0)?;
   io::copy(&mut buf.as_slice(), &mut file)?;
   file.seek(SeekFrom::Start(0))?;
   file.sync_all()?;
