@@ -141,7 +141,7 @@ pub mod manager;
 pub use crate::error::{Error, UserError};
 
 #[doc(inline)]
-pub use crate::manager::format::FileFormat;
+pub use crate::manager::format::{FileFormat, FileFormatUtf8};
 
 pub(crate) mod sealed {
   pub trait Sealed {}

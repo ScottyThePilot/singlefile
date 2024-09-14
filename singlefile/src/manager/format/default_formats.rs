@@ -1,6 +1,6 @@
 //! Basic formats for treating files as plain bytes or UTF-8 text.
 
-use super::FileFormat;
+use super::{FileFormat, FileFormatUtf8};
 
 use std::hash::Hash;
 use std::io::{self, Read, Write};
@@ -70,5 +70,15 @@ impl<T> FileFormat<T> for PlainUtf8 where T: AsRef<str>, String: Into<T> {
 
   fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
     Ok(value.as_ref().to_owned().into_bytes())
+  }
+}
+
+impl<T> FileFormatUtf8<T> for PlainUtf8 where T: AsRef<str>, String: Into<T> {
+  fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError> {
+    Ok(buf.to_owned().into())
+  }
+
+  fn to_string_buffer(&self, value: &T) -> Result<String, Self::FormatError> {
+    Ok(value.as_ref().to_owned())
   }
 }

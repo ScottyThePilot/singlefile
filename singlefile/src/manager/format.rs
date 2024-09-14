@@ -82,6 +82,15 @@ pub trait FileFormat<T> {
   }
 }
 
+/// A trait that indicates a file's contents will always be valid UTF-8.
+pub trait FileFormatUtf8<T>: FileFormat<T> {
+  /// Deserialize a buffer from a string slice.
+  fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError>;
+
+  /// Serialize a value into a string buffer.
+  fn to_string_buffer(&self, value: &T) -> Result<String, Self::FormatError>;
+}
+
 macro_rules! impl_file_format_delegate {
   (<$Format:ident> $Type:ty) => (
     impl<T, $Format: FileFormat<T>> FileFormat<T> for $Type {
