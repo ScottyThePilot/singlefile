@@ -1,6 +1,6 @@
 [package]
 name = "singlefile"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 description = "Dead simple file data manipulation."
 documentation = "https://docs.rs/singlefile"
@@ -11,8 +11,9 @@ rust-version = "1.65"
 
 [dependencies]
 dunce = { version = "1.0.5" }
-fs4 = { version = "0.9.1" }
-fs-err = { version = "2", features = ["io_safety"], optional = true }
+fs4 = { version = "0.13.1" }
+fs-err2 = { package = "fs-err", version = "2", optional = true }
+fs-err3 = { package = "fs-err", version = "3", optional = true }
 thiserror = { version = "1.0" }
 
 [dependencies.parking_lot]
@@ -37,7 +38,9 @@ default = ["tokio-parking-lot"]
 shared = ["dep:parking_lot", "tokio?/parking_lot"]
 shared-async = ["dep:tokio", "tokio?/sync"]
 
-fs-err = ["dep:fs-err", "fs4/fs-err"]
+fs-err = ["fs-err3"]
+fs-err2 = ["dep:fs-err2", "fs4/fs-err2"]
+fs-err3 = ["dep:fs-err3", "fs4/fs-err3"]
 # enables the `deadlock_detection` feature for parking_lot, if present
 deadlock-detection = ["parking_lot?/deadlock_detection"]
 # enables the `parking_lot` feature for tokio, if present

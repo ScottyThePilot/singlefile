@@ -49,7 +49,8 @@ impl Sealed for SharedLock {}
 impl FileLock for SharedLock {
   #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
-    crate::fs::FileExt::try_lock_shared(file)
+    crate::fs::FileExt::try_lock_shared(file)?;
+    Ok(())
   }
 
   #[inline(always)]
@@ -69,7 +70,8 @@ impl Sealed for ExclusiveLock {}
 impl FileLock for ExclusiveLock {
   #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
-    crate::fs::FileExt::try_lock_exclusive(file)
+    crate::fs::FileExt::try_lock_exclusive(file)?;
+    Ok(())
   }
 
   #[inline(always)]

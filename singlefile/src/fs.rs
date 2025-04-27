@@ -1,10 +1,49 @@
 #![allow(unused_imports)]
 //! Utility module re-exporting filesystem functions.
 //!
-//! If the `fs-err` feature is enabled, all of these functions will
+//! If the `fs-err3` feature is enabled, all of these
+//! items will point to functions from `fs-err` v3.
+//!
+//! Otherwise, if the `fs-err2` feature is enabled, all of these
+//! items will point to functions from `fs-err` v2.
+//!
+//! Otherwise, all of these items will point to functions
+//! from the standard library.
 
 use std::path::{Path, PathBuf};
 use std::io::{self, prelude::*};
+
+macro_rules! import_fs4 {
+  ($vis:vis use { $($name:ident $(as $new_name:ident)?),* $(,)? }) => (
+    #[cfg(not(any(feature = "fs-err2", feature = "fs-err3")))]
+    #[doc(no_inline)]
+    $vis use fs4::fs_std::{$($name $(as $new_name)?),*};
+
+    #[cfg(all(feature = "fs-err2", not(feature = "fs-err3")))]
+    #[doc(no_inline)]
+    $vis use fs4::fs_err2::{$($name $(as $new_name)?),*};
+
+    #[cfg(feature = "fs-err3")]
+    #[doc(no_inline)]
+    $vis use fs4::fs_err3::{$($name $(as $new_name)?),*};
+  );
+}
+
+macro_rules! import_fs {
+  ($vis:vis use { $($name:ident $(as $new_name:ident)?),* $(,)? }) => (
+    #[cfg(not(any(feature = "fs-err2", feature = "fs-err3")))]
+    #[doc(no_inline)]
+    $vis use std::fs::{$($name $(as $new_name)?),*};
+
+    #[cfg(all(feature = "fs-err2", not(feature = "fs-err3")))]
+    #[doc(no_inline)]
+    $vis use fs_err2::{$($name $(as $new_name)?),*};
+
+    #[cfg(feature = "fs-err3")]
+    #[doc(no_inline)]
+    $vis use fs_err3::{$($name $(as $new_name)?),*};
+  );
+}
 
 #[doc(no_inline)]
 pub use fs4::{
@@ -13,13 +52,9 @@ pub use fs4::{
   lock_contended_error
 };
 
-#[cfg(not(feature = "fs-err"))]
-#[doc(no_inline)]
-pub use fs4::fs_std::FileExt;
-
-#[cfg(feature = "fs-err")]
-#[doc(no_inline)]
-pub use fs4::fs_err::FileExt;
+import_fs4!(pub use {
+  FileExt
+});
 
 #[doc(no_inline)]
 pub use std::fs::{
@@ -29,18 +64,7 @@ pub use std::fs::{
   Permissions
 };
 
-macro_rules! switch_fs {
-  ($vis:vis use { $($name:ident $(as $new_name:ident)?),* $(,)? }) => (
-    #[cfg(not(feature = "fs-err"))]
-    #[doc(no_inline)]
-    $vis use std::fs::{ $($name $(as $new_name)?),* };
-    #[cfg(feature = "fs-err")]
-    #[doc(no_inline)]
-    $vis use fs_err::{ $($name $(as $new_name)?),* };
-  );
-}
-
-switch_fs!(pub use {
+import_fs!(pub use {
   DirEntry,
   File,
   OpenOptions,
