@@ -4,7 +4,7 @@ use crate::error::Error;
 use crate::manager::format::FileFormat;
 use crate::sealed::Sealed;
 
-use std::fs::{File, OpenOptions};
+use crate::fs::{File, OpenOptions};
 use std::io::{self, Seek, SeekFrom};
 use std::path::Path;
 
@@ -18,11 +18,12 @@ pub trait FileMode: Sealed + Send + Sync + 'static {
   const WRITABLE: bool;
 
   /// Open a new file with this file mode.
+  #[doc(hidden)]
   fn open<P: AsRef<Path>>(path: P) -> io::Result<File> {
     OpenOptions::new()
       .read(Self::READABLE)
       .write(Self::WRITABLE)
-      .open(path)
+      .open(path.as_ref())
   }
 }
 
@@ -30,8 +31,10 @@ pub trait FileMode: Sealed + Send + Sync + 'static {
 pub trait Reading: FileMode {
   /// Read a value from the file.
   #[inline]
+  #[doc(hidden)]
   fn read<T, Format>(format: &Format, file: &File) -> Result<T, Error<Format::FormatError>>
   where Format: FileFormat<T> {
+    const { debug_assert!(Self::READABLE) };
     read(format, file)
   }
 }
@@ -40,8 +43,10 @@ pub trait Reading: FileMode {
 pub trait Writing: FileMode {
   /// Write a value to the file.
   #[inline]
+  #[doc(hidden)]
   fn write<T, Format>(format: &Format, file: &File, value: &T) -> Result<(), Error<Format::FormatError>>
   where Format: FileFormat<T> {
+    const { debug_assert!(Self::WRITABLE) };
     write(format, file, value)
   }
 }

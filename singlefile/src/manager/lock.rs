@@ -2,7 +2,7 @@
 
 use crate::sealed::Sealed;
 
-use std::fs::File;
+use crate::fs::File;
 use std::io;
 
 
@@ -10,9 +10,11 @@ use std::io;
 /// Describes a mode by which a file can be locked or unlocked.
 pub trait FileLock: Sealed + Send + Sync + 'static {
   /// Locks the file.
+  #[doc(hidden)]
   fn lock(file: &File) -> io::Result<()>;
 
   /// Unlocks the file.
+  #[doc(hidden)]
   fn unlock(file: &File) -> io::Result<()>;
 }
 
@@ -47,12 +49,12 @@ impl Sealed for SharedLock {}
 impl FileLock for SharedLock {
   #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
-    fs4::fs_std::FileExt::try_lock_shared(file)
+    crate::fs::FileExt::try_lock_shared(file)
   }
 
   #[inline(always)]
   fn unlock(file: &File) -> io::Result<()> {
-    fs4::fs_std::FileExt::unlock(file)
+    crate::fs::FileExt::unlock(file)
   }
 }
 
@@ -67,11 +69,11 @@ impl Sealed for ExclusiveLock {}
 impl FileLock for ExclusiveLock {
   #[inline(always)]
   fn lock(file: &File) -> io::Result<()> {
-    fs4::fs_std::FileExt::try_lock_exclusive(file)
+    crate::fs::FileExt::try_lock_exclusive(file)
   }
 
   #[inline(always)]
   fn unlock(file: &File) -> io::Result<()> {
-    fs4::fs_std::FileExt::unlock(file)
+    crate::fs::FileExt::unlock(file)
   }
 }

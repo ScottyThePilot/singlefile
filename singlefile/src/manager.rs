@@ -18,7 +18,7 @@ pub use self::format::FileFormat;
 use std::io;
 use std::marker::PhantomData;
 use std::path::Path;
-use std::fs::{File, OpenOptions};
+use crate::fs::{File, OpenOptions};
 
 #[cfg(unix)]
 use std::os::unix::io::{IntoRawFd, AsRawFd, RawFd};
@@ -75,6 +75,14 @@ where Lock: FileLock, Mode: FileMode {
   where Format: FileFormat<T>, T: Default {
     let value = read_or_write(path.as_ref(), &format, T::default)?;
     Ok((value, Self::open(path, format)?))
+  }
+
+  /// Returns a reference to the path that this file was created with.
+  #[cfg_attr(docsrs, doc(cfg(feature = "fs-err")))]
+  #[cfg(feature = "fs-err")]
+  #[inline]
+  pub fn path(&self) -> &Path {
+    self.file.path()
   }
 }
 
