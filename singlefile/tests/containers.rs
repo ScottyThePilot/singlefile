@@ -2,7 +2,7 @@
 extern crate serde;
 extern crate singlefile;
 
-use singlefile_formats::json_serde::Json;
+use singlefile_formats::data::json_serde::Json;
 
 use std::{fs, mem};
 

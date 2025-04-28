@@ -7,7 +7,7 @@ use singlefile::container::ContainerWritable;
 // You can implement a file format however you want,
 // since `singlefile` is serialization-framework agnostic.
 // This example uses the preset JSON format from singlefile-formats.
-use singlefile_formats::json_serde::Json;
+use singlefile_formats::data::json_serde::Json;
 
 fn main() {
   // Create a new container, the data and data format must be specified somehow.
