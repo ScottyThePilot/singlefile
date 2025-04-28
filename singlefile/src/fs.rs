@@ -13,6 +13,12 @@
 use std::path::{Path, PathBuf};
 use std::io::{self, prelude::*};
 
+#[cfg(all(feature = "fs-err2", not(feature = "fs-err3")))]
+pub use fs_err2 as fs_err;
+
+#[cfg(feature = "fs-err3")]
+pub use fs_err3 as fs_err;
+
 macro_rules! import_fs4 {
   ($vis:vis use { $($name:ident $(as $new_name:ident)?),* $(,)? }) => (
     #[cfg(not(any(feature = "fs-err2", feature = "fs-err3")))]
