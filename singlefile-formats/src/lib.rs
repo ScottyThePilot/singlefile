@@ -26,7 +26,7 @@ pub extern crate singlefile;
 
 /// Defines a compression format interface, and a [`FileFormat`] which wraps another [`FileFormat`],
 /// is generic over compression formats, and compresses the contents of the wrapped format.
-#[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
 #[cfg(feature = "compression")]
 pub mod compression {
   use singlefile::FileFormat;
