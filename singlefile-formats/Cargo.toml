@@ -27,17 +27,18 @@ version = "0.3.0"
 version = "1.0"
 
 [features]
-default = []
+default = ["compression"]
+compression = []
 # formats
 base64 = ["dep:base64"]
 cbor-serde = ["dep:ciborium", "dep:serde"]
 json-serde = ["dep:serde_json", "dep:serde"]
 toml-serde = ["dep:toml", "dep:serde"]
 # compression
-bzip = ["dep:bzip2"]
-bzip_rust = ["bzip2/libbz2-rs-sys"]
-flate = ["dep:flate2"]
-xz = ["dep:xz2"]
+bzip = ["compression", "dep:bzip2"]
+bzip_rust = ["bzip", "bzip2/libbz2-rs-sys"]
+flate = ["compression", "dep:flate2"]
+xz = ["compression", "dep:xz2"]
 
 [package.metadata.docs.rs]
 all-features = true
