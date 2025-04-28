@@ -78,8 +78,8 @@ where Lock: FileLock, Mode: FileMode {
   }
 
   /// Returns a reference to the path that this file was created with.
-  #[cfg_attr(docsrs, doc(cfg(feature = "fs-err")))]
-  #[cfg(feature = "fs-err")]
+  #[cfg_attr(docsrs, doc(cfg(any(feature = "fs-err2", feature = "fs-err3"))))]
+  #[cfg(any(feature = "fs-err2", feature = "fs-err3"))]
   #[inline]
   pub fn path(&self) -> &Path {
     self.file.path()
