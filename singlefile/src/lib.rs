@@ -5,7 +5,7 @@
 //! [`Container`] is named so to indicate that it contains and manages a file and a value.
 //!
 //! ```no_run
-//! # use singlefile_formats::json_serde::{Json, JsonError};
+//! # use singlefile_formats::data::json_serde::{Json, JsonError};
 //! // A readable, writable container
 //! use singlefile::container::ContainerWritable;
 //! use serde::{Serialize, Deserialize};
@@ -43,7 +43,7 @@
 //! The async container types can be enabled with the `shared-async` cargo feature.
 //!
 //! ```no_run
-//! # use singlefile_formats::json_serde::{Json, JsonError};
+//! # use singlefile_formats::data::json_serde::{Json, JsonError};
 //! # use std::convert::Infallible;
 //! // A readable, writable container with multiple-ownership
 //! use singlefile::container_shared::ContainerSharedWritable;
@@ -74,7 +74,7 @@
 //! Here is how you'd write a `Json` adapter for the above examples, using `serde`.
 //!
 //! ```no_run
-//! # use singlefile_formats::json_serde::serde_json;
+//! # use singlefile_formats::data::json_serde::original as serde_json;
 //! use serde::ser::Serialize;
 //! use serde::de::DeserializeOwned;
 //! use singlefile::FileFormat;

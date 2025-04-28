@@ -17,7 +17,7 @@ use std::io::{Cursor, BufReader, BufWriter, Read, Write};
 /// # use serde::ser::Serialize;
 /// # use serde::de::DeserializeOwned;
 /// # use singlefile::FileFormat;
-/// # use singlefile_formats::json_serde::serde_json;
+/// # use singlefile_formats::data::json_serde::original as serde_json;
 /// # use std::io::{Read, Write};
 /// struct Json;
 ///
@@ -119,6 +119,16 @@ macro_rules! impl_file_format_delegate {
       #[inline]
       fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
         $Format::to_buffer(self, value)
+      }
+    }
+
+    impl<T, $Format: FileFormatUtf8<T>> FileFormatUtf8<T> for $Type {
+      fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError> {
+        $Format::from_string_buffer(self, buf)
+      }
+
+      fn to_string_buffer(&self, value: &T) -> Result<String, Self::FormatError> {
+        $Format::to_string_buffer(self, value)
       }
     }
   );
