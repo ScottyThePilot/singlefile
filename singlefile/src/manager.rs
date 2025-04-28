@@ -1,14 +1,11 @@
 //! This module contains the [`FileManager`] struct which gives more direct access to a file.
-//!
-//! [`FileManager`]s are generic, so you can implement custom file modes and lock modes.
-//! Custom file modes may not be fully compatible with the built-in container types
-//! unless they implement the [`Reading`] and [`Writing`] traits.
 
 pub mod lock;
 pub mod mode;
 pub mod format;
 
 use crate::error::Error;
+use crate::fs::{File, OpenOptions};
 use self::lock::FileLock;
 use self::mode::FileMode;
 pub use self::lock::{NoLock, SharedLock, ExclusiveLock};
@@ -18,7 +15,6 @@ pub use self::format::FileFormat;
 use std::io;
 use std::marker::PhantomData;
 use std::path::Path;
-use crate::fs::{File, OpenOptions};
 
 #[cfg(unix)]
 use std::os::unix::io::{IntoRawFd, AsRawFd, RawFd};

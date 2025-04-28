@@ -1,8 +1,8 @@
 //! Defines different types of file system locks.
 
+use crate::fs::File;
 use crate::sealed::Sealed;
 
-use crate::fs::File;
 use std::io;
 
 
@@ -55,7 +55,8 @@ impl FileLock for SharedLock {
 
   #[inline(always)]
   fn unlock(file: &File) -> io::Result<()> {
-    crate::fs::FileExt::unlock(file)
+    crate::fs::FileExt::unlock(file)?;
+    Ok(())
   }
 }
 
@@ -76,6 +77,7 @@ impl FileLock for ExclusiveLock {
 
   #[inline(always)]
   fn unlock(file: &File) -> io::Result<()> {
-    crate::fs::FileExt::unlock(file)
+    crate::fs::FileExt::unlock(file)?;
+    Ok(())
   }
 }

@@ -1,10 +1,10 @@
 //! Defines different modes of accessing/manipulating files.
 
 use crate::error::Error;
+use crate::fs::{File, OpenOptions};
 use crate::manager::format::FileFormat;
 use crate::sealed::Sealed;
 
-use crate::fs::{File, OpenOptions};
 use std::io::{self, Seek, SeekFrom};
 use std::path::Path;
 

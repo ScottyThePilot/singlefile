@@ -138,6 +138,7 @@ pub mod container_shared_async;
 pub mod error;
 pub mod fs;
 pub mod manager;
+pub mod utils;
 
 pub use crate::error::{Error, UserError};
 
