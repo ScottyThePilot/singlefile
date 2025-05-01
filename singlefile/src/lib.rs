@@ -113,6 +113,9 @@
 //! [`FileFormat`]: crate::manager::format::FileFormat
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![allow(
+  clippy::wrong_self_convention
+)]
 #![warn(
   future_incompatible,
   missing_copy_implementations,

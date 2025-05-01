@@ -1,6 +1,6 @@
 [package]
 name = "singlefile-formats"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 description = "Default file format implementations for singlefile."
 documentation = "https://docs.rs/singlefile-formats"
@@ -22,7 +22,7 @@ xz2 = { version = "0.1.7", optional = true }
 
 [dependencies.singlefile]
 path = "../singlefile"
-version = "0.3.0"
+version = "0.3.1"
 
 [dependencies.thiserror]
 version = "1.0"
@@ -39,9 +39,11 @@ json-serde = ["dep:serde_json", "dep:serde"]
 toml-serde = ["dep:toml", "dep:serde"]
 # compression formats
 bzip = ["compression", "dep:bzip2"]
-bzip_rust = ["bzip", "bzip2/libbz2-rs-sys"]
+bzip-rust = ["bzip", "bzip2/libbz2-rs-sys"]
 flate = ["compression", "dep:flate2"]
 xz = ["compression", "dep:xz2"]
+
+bzip_rust = ["bzip-rust"]
 
 [package.metadata.docs.rs]
 all-features = true

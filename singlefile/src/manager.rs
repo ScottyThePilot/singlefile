@@ -168,7 +168,10 @@ where Format: FileFormat<T>, C: FnOnce() -> T {
   match OpenOptions::new().read(true).open(path) {
     Ok(file) => self::mode::read(format, &file),
     Err(err) if err.kind() == NotFound => {
-      let file = OpenOptions::new().write(true).create(true).open(path)?;
+      let file = OpenOptions::new()
+        .write(true).create(true)
+        .truncate(false)
+        .open(path)?;
       let value = closure();
       self::mode::write(format, &file, &value)?;
       Ok(value)
@@ -181,6 +184,6 @@ fn overwrite<T, Format>(path: &Path, format: &Format, value: &T) -> Result<(), E
 where Format: FileFormat<T> {
   let file = OpenOptions::new().write(true)
     .create(true).truncate(true).open(path)?;
-  self::mode::write(format, &file, &value)?;
+  self::mode::write(format, &file, value)?;
   Ok(())
 }

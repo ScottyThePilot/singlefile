@@ -1,4 +1,3 @@
-#![allow(unused_imports)]
 //! Utility module re-exporting filesystem functions.
 //!
 //! If the `fs-err3` feature is enabled, all of these
@@ -11,7 +10,6 @@
 //! from the standard library.
 
 use std::path::{Path, PathBuf};
-use std::io::{self, prelude::*};
 
 #[cfg(all(feature = "fs-err2", not(feature = "fs-err3")))]
 pub use fs_err2 as fs_err;
@@ -108,7 +106,7 @@ pub fn simplified_path(path: &Path) -> &Path {
 ///
 /// Uses [`dunce::simplified`] internally.
 #[inline]
-pub fn canonicalize<P: AsRef<Path>>(path: P) -> io::Result<PathBuf> {
+pub fn canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
   let path = canonicalize_raw(path)?;
 
   #[cfg(windows)]

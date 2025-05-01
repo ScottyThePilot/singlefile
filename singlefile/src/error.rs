@@ -66,7 +66,6 @@ impl<FE, U> UserError<FE, U> {
   }
 }
 
-/// Converts an [`enum@Error<io::Error>`] into just an [`io::Error`].
 impl<FE, U> From<Error<FE>> for UserError<FE, U> {
   fn from(err: Error<FE>) -> Self {
     match err {

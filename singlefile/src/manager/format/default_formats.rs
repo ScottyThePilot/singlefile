@@ -32,7 +32,7 @@ impl<T> FileFormat<T> for PlainBytes where T: AsRef<[u8]>, Vec<u8>: Into<T> {
   }
 
   fn to_writer<W: Write>(&self, mut writer: W, value: &T) -> io::Result<()> {
-    writer.write_all(value.as_ref()).map_err(From::from)
+    writer.write_all(value.as_ref())
   }
 
   fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
@@ -65,7 +65,7 @@ impl<T> FileFormat<T> for PlainUtf8 where T: AsRef<str>, String: Into<T> {
   }
 
   fn to_writer<W: Write>(&self, mut writer: W, value: &T) -> io::Result<()> {
-    writer.write_all(value.as_ref().as_bytes()).map_err(From::from)
+    writer.write_all(value.as_ref().as_bytes())
   }
 
   fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
