@@ -42,3 +42,4 @@ pub extern crate singlefile;
 
 pub mod compression;
 pub mod data;
+pub mod utils_serde;
