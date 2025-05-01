@@ -104,6 +104,9 @@
 //!
 //! - `shared`: Enables [`ContainerShared`], pulling in `parking_lot`.
 //! - `shared-async`: Enables [`ContainerSharedAsync`], pulling in `tokio` and (by default) `parking_lot`.
+//! - `fs-err2`: Enables this crate to use `fs-err` v2 for everything filesystem-related.
+//! - `fs-err3`: Enables this crate to use `fs-err` v3 for everything filesystem-related. Overrides `fs-err2` if present.
+//! - `fs-err`: An alias for the `fs-err3` feature (and will correspond to the latest version of `fs-err` going forwards).
 //! - `deadlock-detection`: Enables `parking_lot`'s `deadlock_detection` feature, if it is present.
 //! - `tokio-parking-lot`: Enables `parking_lot` for use in `tokio`, if it is present. Enabled by default.
 //!
