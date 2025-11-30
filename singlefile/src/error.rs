@@ -46,7 +46,7 @@ pub enum UserError<FE, U> {
   Format(FE),
   /// An error caused by the filesystem.
   #[error(transparent)]
-  Io(#[from] std::io::Error),
+  Io(#[from] io::Error),
   /// An error caused by the user.
   #[error("user error: {0}")]
   User(U)

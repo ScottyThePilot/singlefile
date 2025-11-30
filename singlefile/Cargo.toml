@@ -14,7 +14,8 @@ dunce = { version = "1.0.5" }
 fs4 = { version = "0.13.1" }
 fs-err2 = { package = "fs-err", version = "2", optional = true }
 fs-err3 = { package = "fs-err", version = "3", optional = true }
-thiserror = { version = "1.0" }
+thiserror = { version = "2.0" }
+cfg-if = { version = "1.0.4" }
 
 [dependencies.parking_lot]
 version = "0.12"
@@ -23,7 +24,7 @@ optional = true
 
 [dependencies.tokio]
 version = "1"
-features = ["rt"]
+features = ["rt", "sync"]
 optional = true
 
 [dev-dependencies]
@@ -36,7 +37,7 @@ tempfile = "3.8"
 default = ["tokio-parking-lot"]
 
 shared = ["dep:parking_lot", "tokio?/parking_lot"]
-shared-async = ["dep:tokio", "tokio?/sync"]
+shared-async = ["dep:tokio"]
 
 fs-err = ["fs-err3"]
 fs-err2 = ["dep:fs-err2", "fs4/fs-err2"]

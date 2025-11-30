@@ -11,41 +11,45 @@
 
 use std::path::{Path, PathBuf};
 
-#[cfg(all(feature = "fs-err2", not(feature = "fs-err3")))]
-pub use fs_err2 as fs_err;
-
-#[cfg(feature = "fs-err3")]
-pub use fs_err3 as fs_err;
+cfg_if::cfg_if!{
+  if #[cfg(feature = "fs-err3")] {
+    pub use fs_err3 as fs_err;
+  } else if #[cfg(feature = "fs-err2")] {
+    pub use fs_err2 as fs_err;
+  }
+}
 
 macro_rules! import_fs4 {
   ($vis:vis use { $($name:ident $(as $new_name:ident)?),* $(,)? }) => (
-    #[cfg(not(any(feature = "fs-err2", feature = "fs-err3")))]
-    #[doc(no_inline)]
-    $vis use fs4::fs_std::{$($name $(as $new_name)?),*};
-
-    #[cfg(all(feature = "fs-err2", not(feature = "fs-err3")))]
-    #[doc(no_inline)]
-    $vis use fs4::fs_err2::{$($name $(as $new_name)?),*};
-
-    #[cfg(feature = "fs-err3")]
-    #[doc(no_inline)]
-    $vis use fs4::fs_err3::{$($name $(as $new_name)?),*};
+    cfg_if::cfg_if!{
+      if #[cfg(feature = "fs-err3")] {
+        #[doc(no_inline)]
+        $vis use fs4::fs_err3::{$($name $(as $new_name)?),*};
+      } else if #[cfg(feature = "fs-err2")] {
+        #[doc(no_inline)]
+        $vis use fs4::fs_err2::{$($name $(as $new_name)?),*};
+      } else {
+        #[doc(no_inline)]
+        $vis use fs4::fs_std::{$($name $(as $new_name)?),*};
+      }
+    }
   );
 }
 
 macro_rules! import_fs {
   ($vis:vis use { $($name:ident $(as $new_name:ident)?),* $(,)? }) => (
-    #[cfg(not(any(feature = "fs-err2", feature = "fs-err3")))]
-    #[doc(no_inline)]
-    $vis use std::fs::{$($name $(as $new_name)?),*};
-
-    #[cfg(all(feature = "fs-err2", not(feature = "fs-err3")))]
-    #[doc(no_inline)]
-    $vis use fs_err2::{$($name $(as $new_name)?),*};
-
-    #[cfg(feature = "fs-err3")]
-    #[doc(no_inline)]
-    $vis use fs_err3::{$($name $(as $new_name)?),*};
+    cfg_if::cfg_if!{
+      if #[cfg(feature = "fs-err3")] {
+        #[doc(no_inline)]
+        $vis use fs_err3::{$($name $(as $new_name)?),*};
+      } else if #[cfg(feature = "fs-err2")] {
+        #[doc(no_inline)]
+        $vis use fs_err2::{$($name $(as $new_name)?),*};
+      } else {
+        #[doc(no_inline)]
+        $vis use std::fs::{$($name $(as $new_name)?),*};
+      }
+    }
   );
 }
 

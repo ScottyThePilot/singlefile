@@ -107,6 +107,11 @@ macro_rules! impl_file_format_delegate {
       }
 
       #[inline]
+      fn from_buffer(&self, buf: &[u8]) -> Result<T, Self::FormatError> {
+        $Format::from_buffer(self, buf)
+      }
+
+      #[inline]
       fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
         $Format::to_writer(self, writer, value)
       }
