@@ -85,6 +85,59 @@ fn container_shared() {
   temp_dir.close().unwrap();
 }
 
+#[tokio::test]
+#[cfg(feature = "shared-async")]
+async fn container_shared_async() {
+  use singlefile::container_shared_async::StandardContainerSharedAsync;
+
+  use std::convert::Infallible;
+
+  let temp_dir = tempfile::tempdir().unwrap();
+  let path = temp_dir.path().join("data.json");
+
+  let container = StandardContainerSharedAsync::<Data, Json>::create_or_default(&path, Json, Default::default()).await
+    .expect("failed to create container for data.json");
+
+  let magic_number = container.operate(async |data| data.number).await;
+  assert_eq!(magic_number, 0);
+
+  let container1 = container.clone();
+  let t1 = tokio::spawn(async move {
+    container1.operate_mut_commit(async |data| {
+      data.number += 1;
+      Ok::<(), Infallible>(())
+    }).await.unwrap();
+  });
+
+  let container2 = container.clone();
+  let t2 = tokio::spawn(async move {
+    container2.operate_mut_commit(async |data| {
+      data.number += 1;
+      Ok::<(), Infallible>(())
+    }).await.unwrap();
+  });
+
+  let container3 = container.clone();
+  let t3 = tokio::spawn(async move {
+    container3.operate_mut_commit(async |data| {
+      data.number += 1;
+      Ok::<(), Infallible>(())
+    }).await.unwrap();
+  });
+
+  t1.await.unwrap();
+  t2.await.unwrap();
+  t3.await.unwrap();
+
+  let magic_number = container.operate(async |data| data.number).await;
+  assert_eq!(magic_number, 3);
+
+  mem::drop(container);
+
+  fs::remove_file(path).unwrap();
+  temp_dir.close().unwrap();
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct Data {
   number: i32

@@ -111,8 +111,8 @@ impl<T, Manager> ContainerSharedAsync<T, Manager> {
   ///
   /// This function acquires an immutable lock on the shared state.
   pub async fn operate<F, R>(&self, operation: F) -> R
-  where F: FnOnce(&T) -> R {
-    operation(&*self.access().await)
+  where F: AsyncFnOnce(&T) -> R {
+    operation(&*self.access().await).await
   }
 
   /// Grants the caller mutable access to the underlying value `T`,
@@ -120,8 +120,8 @@ impl<T, Manager> ContainerSharedAsync<T, Manager> {
   ///
   /// This function acquires a mutable lock on the shared state.
   pub async fn operate_mut<F, R>(&self, operation: F) -> R
-  where F: FnOnce(&mut T) -> R {
-    operation(&mut *self.access_mut().await)
+  where F: AsyncFnOnce(&mut T) -> R {
+    operation(&mut *self.access_mut().await).await
   }
 }
 
@@ -179,6 +179,7 @@ where
   /// but only for the duration of the provided function or closure.
   /// The contents of `operation` will be treated as if they will block,
   /// and will be called through [`tokio::task::spawn_blocking`].
+  #[deprecated = "use `ContainerSharedAsync::operate` instead"]
   pub async fn operate_nonblocking<F, R>(&self, operation: F) -> R
   where F: FnOnce(&T) -> R + Send + 'static, R: Send + 'static {
     let guard = self.access_owned().await;
@@ -189,6 +190,7 @@ where
   /// but only for the duration of the provided function or closure.
   /// The contents of `operation` will be treated as if they will block,
   /// and will be called through [`tokio::task::spawn_blocking`].
+  #[deprecated = "use `ContainerSharedAsync::operate_mut` instead"]
   pub async fn operate_mut_nonblocking<F, R>(&self, operation: F) -> R
   where F: FnOnce(&mut T) -> R + Send + 'static, R: Send + 'static {
     let mut guard = self.access_owned_mut().await;
@@ -203,11 +205,11 @@ where
   ///
   /// This function acquires a mutable lock on the shared state.
   pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Manager::Error>
-  where F: FnOnce(&T, T) -> R {
+  where F: AsyncFnOnce(&T, T) -> R {
     let mut guard = self.access_owned_mut().await;
     let (old_value, guard) = spawn_blocking!(guard.container_mut().refresh().map(|t| (t, guard)))?;
     let guard = OwnedAccessGuardMut::downgrade(guard);
-    Ok(operation(&guard, old_value))
+    Ok(operation(&guard, old_value).await)
   }
 
   /// Grants the caller mutable access to the underlying value `T`,
@@ -216,10 +218,10 @@ where
   ///
   /// This function acquires a mutable lock on the shared state.
   pub async fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, OrUserError<Manager::Error, U>>
-  where F: FnOnce(&mut T) -> Result<R, U> {
+  where F: AsyncFnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_owned_mut().await;
-    let ret = operation(&mut guard).map_err(OrUserError::User)?;
-    self.commit_guard(OwnedAccessGuardMut::downgrade(guard)).await?;
+    let ret = operation(&mut guard).await.map_err(OrUserError::User)?;
+    Self::commit_with_guard(OwnedAccessGuardMut::downgrade(guard)).await?;
     Ok(ret)
   }
 
@@ -236,14 +238,14 @@ where
   /// Writes the current in-memory state to the managed file.
   ///
   /// This function acquires an immutable lock on the shared state.
-  /// Don't call this if you currently have an access guard, use [`ContainerSharedAsync::commit_guard`] instead.
+  /// Don't call this if you currently have an access guard, use [`ContainerSharedAsync::commit_with_guard`] instead.
   pub async fn commit(&self) -> Result<(), Manager::Error> {
     let guard = self.access_owned().await;
-    self.commit_guard(guard).await
+    Self::commit_with_guard(guard).await
   }
 
   /// Writes to the managed file given an access guard.
-  pub async fn commit_guard(&self, guard: OwnedAccessGuard<T, Manager>) -> Result<(), Manager::Error> {
+  pub async fn commit_with_guard(guard: OwnedAccessGuard<T, Manager>) -> Result<(), Manager::Error> {
     spawn_blocking!(guard.container().commit())
   }
 
