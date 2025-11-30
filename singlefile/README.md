@@ -10,7 +10,7 @@ This library is designed to be a dead-simple way of reading and writing your rus
 
 ```rust
 // A readable, writable container
-use singlefile::container::ContainerWritable;
+use singlefile::container::{StandardContainer, StandardContainerOptions};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -20,7 +20,7 @@ struct MyData {
 
 // Attempts to open 'my_data.json', creating it from default if it does not exist,
 // expecting data that the `Json` format can decode into `MyData`
-let mut my_container = ContainerWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
+let mut my_container = StandardContainer::<MyData, Json>::create_or_default("my_data.json", Json, options)?;
 // For regular `Container`s, `Deref` and `DerefMut` can be used to access the contained type
 println!("magic_number: {}", my_container.magic_number); // 0 (as long as the file didn't exist before)
 my_container.magic_number += 1;
@@ -46,7 +46,7 @@ The async container types can be enabled with the `shared-async` cargo feature.
 
 ```rust
 // A readable, writable container with multiple-ownership
-use singlefile::container_shared::ContainerSharedWritable;
+use singlefile::container_shared::{StandardContainerShared, StandardContainerSharedOptions};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -55,7 +55,7 @@ struct MyData {
 }
 
 // `ContainerShared` types may be cloned cheaply, they behave like `Arc`s
-let my_container = ContainerSharedWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
+let my_container = StandardContainerShared::<MyData, Json>::create_or_default("my_data.json", Json, options)?;
 
 // Get access to the contained `MyData`, increment it, and commit changes to disk
 std::thread::spawn(move || {

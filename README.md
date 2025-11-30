@@ -16,7 +16,7 @@ Crate name           | Crates.io page                         | Docs.rs page
 // A JSON file format, utilizing serde
 use singlefile_formats::json_serde::Json;
 // A readable, writable container
-use singlefile::container::ContainerWritable;
+use singlefile::container::StandardContainer;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -26,7 +26,7 @@ struct MyData {
 
 // Attempts to open 'my_data.json', creating it from default if it does not exist,
 // expecting data that the `Json` format can decode into `MyData`
-let mut my_container = ContainerWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
+let mut my_container = StandardContainer::<MyData, Json>::create_or_default("my_data.json", Json, options)?;
 // For regular `Container`s, `Deref` and `DerefMut` can be used to access the contained type
 println!("magic_number: {}", my_container.magic_number); // 0 (as long as the file didn't exist before)
 my_container.magic_number += 1;

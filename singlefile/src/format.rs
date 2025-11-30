@@ -34,6 +34,7 @@ use std::io::{Cursor, BufReader, BufWriter, Read, Write};
 ///   }
 /// }
 /// ```
+#[allow(clippy::wrong_self_convention)]
 pub trait FileFormat<T> {
   /// The type of error to return from `to_writer` and `from_reader`.
   type FormatError: std::error::Error;
@@ -83,6 +84,7 @@ pub trait FileFormat<T> {
 }
 
 /// A trait that indicates a file's contents will always be valid UTF-8.
+#[allow(clippy::wrong_self_convention)]
 pub trait FileFormatUtf8<T>: FileFormat<T> {
   /// Deserialize a buffer from a string slice.
   fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError>;

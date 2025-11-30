@@ -31,7 +31,11 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(
+  absolute_paths_not_starting_with_crate,
+  redundant_imports,
+  redundant_lifetimes,
   future_incompatible,
+  deprecated_in_future,
   missing_copy_implementations,
   missing_debug_implementations,
   missing_docs,

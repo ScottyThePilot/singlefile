@@ -7,7 +7,7 @@
 //! ```no_run
 //! # use singlefile_formats::data::json_serde::{Json, JsonError};
 //! // A readable, writable container
-//! use singlefile::container::ContainerWritable;
+//! use singlefile::container::{StandardContainer, StandardContainerOptions};
 //! use serde::{Serialize, Deserialize};
 //!
 //! #[derive(Serialize, Deserialize, Default)]
@@ -17,7 +17,8 @@
 //!
 //! // Attempts to open 'my_data.json', creating it from default if it does not exist,
 //! // expecting data that the `Json` format can decode into `MyData`
-//! let mut my_container = ContainerWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
+//! # let options = StandardContainerOptions::new();
+//! let mut my_container = StandardContainer::<MyData, Json>::create_or_default("my_data.json", Json, options)?;
 //! // For regular `Container`s, `Deref` and `DerefMut` can be used to access the contained type
 //! println!("magic_number: {}", my_container.magic_number); // 0 (as long as the file didn't exist before)
 //! my_container.magic_number += 1;
@@ -44,9 +45,10 @@
 //!
 //! ```no_run
 //! # use singlefile_formats::data::json_serde::{Json, JsonError};
+//! # #[cfg(feature = "shared")] {
 //! # use std::convert::Infallible;
 //! // A readable, writable container with multiple-ownership
-//! use singlefile::container_shared::ContainerSharedWritable;
+//! use singlefile::container_shared::{StandardContainerShared, StandardContainerSharedOptions};
 //! use serde::{Serialize, Deserialize};
 //!
 //! #[derive(Serialize, Deserialize, Default)]
@@ -55,7 +57,8 @@
 //! }
 //!
 //! // `ContainerShared` types may be cloned cheaply, they behave like `Arc`s
-//! let my_container = ContainerSharedWritable::<MyData, Json>::create_or_default("my_data.json", Json)?;
+//! # let options = StandardContainerSharedOptions::new();
+//! let my_container = StandardContainerShared::<MyData, Json>::create_or_default("my_data.json", Json, options)?;
 //!
 //! // Get access to the contained `MyData`, increment it, and commit changes to disk
 //! std::thread::spawn(move || {
@@ -64,6 +67,7 @@
 //!     Ok::<(), Infallible>(())
 //!   });
 //! });
+//! # }
 //! # Ok::<(), singlefile::Error<JsonError>>(())
 //! ```
 //!
@@ -116,11 +120,13 @@
 //! [`FileFormat`]: crate::manager::format::FileFormat
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![allow(
-  clippy::wrong_self_convention
-)]
+#![forbid(unsafe_code)]
 #![warn(
+  absolute_paths_not_starting_with_crate,
+  redundant_imports,
+  redundant_lifetimes,
   future_incompatible,
+  deprecated_in_future,
   missing_copy_implementations,
   missing_debug_implementations,
   missing_docs,
@@ -142,15 +148,12 @@ pub mod container_shared;
 #[cfg(feature = "shared-async")]
 pub mod container_shared_async;
 pub mod error;
+pub mod format;
 pub mod fs;
 pub mod manager;
 pub mod utils;
 
-pub use crate::error::{Error, UserError};
+pub use crate::error::{Error, OrUserError};
 
 #[doc(inline)]
-pub use crate::manager::format::{FileFormat, FileFormatUtf8};
-
-pub(crate) mod sealed {
-  pub trait Sealed {}
-}
+pub use crate::format::{FileFormat, FileFormatUtf8};

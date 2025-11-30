@@ -1,28 +1,14 @@
 //! Container constructs providing single-ownership managed access to a file.
 
-use crate::error::Error;
-use crate::manager::lock::FileLock;
-use crate::manager::mode::FileMode;
 use crate::manager::*;
 
-use std::io;
 use std::ops::{Deref, DerefMut};
 use std::path::Path;
 
-/// Type alias to a container that is read-only.
-pub type ContainerReadonly<T, Format> = Container<T, ManagerReadonly<Format>>;
-/// Type alias to a container that is readable and writable.
-pub type ContainerWritable<T, Format> = Container<T, ManagerWritable<Format>>;
-/// Type alias to a container that is readable and writable (with atomic writes).
-/// See [`Atomic`] for more information.
-pub type ContainerAtomic<T, Format> = Container<T, ManagerAtomic<Format>>;
-/// Type alias to a container that is read-only, and has a shared file lock.
-pub type ContainerReadonlyLocked<T, Format> = Container<T, ManagerReadonlyLocked<Format>>;
-/// Type alias to a container that is readable and writable, and has an exclusive file lock.
-pub type ContainerWritableLocked<T, Format> = Container<T, ManagerWritableLocked<Format>>;
-/// Type alias to a container that is readable and writable (with atomic writes), and has an exclusive file lock.
-/// See [`Atomic`] for more information.
-pub type ContainerAtomicLocked<T, Format> = Container<T, ManagerAtomicLocked<Format>>;
+/// A shortcut to [`Container<T, StandardManager<Format>>`].
+pub type StandardContainer<T, Format> = Container<T, StandardManager<Format>>;
+/// A shortcut to [`StandardManagerOptions`].
+pub type StandardContainerOptions = StandardManagerOptions;
 
 /// A basic owned container allowing managed access to some underlying file.
 #[derive(Debug)]
@@ -75,69 +61,69 @@ impl<T, Manager> Container<T, Manager> {
   }
 }
 
-impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
-where Format: FileFormat<T>, Lock: FileLock, Mode: FileMode {
+impl<T, Manager> Container<T, Manager>
+where Manager: FileManager<T> {
   /// Opens a new [`Container`], returning an error if the file at the given path does not exist.
-  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
-  where Mode: Reading {
-    let manager = FileManager::open(path, format)?;
+  pub fn open<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options
+  ) -> Result<Self, Manager::Error> {
+    let manager = Manager::open(path, format, options)?;
     let value = manager.read()?;
     Ok(Container { value, manager })
   }
 
   /// Opens a new [`Container`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
-  pub fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
-    let (value, manager) = FileManager::create_overwrite(path, format, value)?;
+  pub fn create_overwrite<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options, value: T
+  ) -> Result<Self, Manager::Error> {
+    let (value, manager) = Manager::create_overwrite(path, format, options, value)?;
     Ok(Container { value, manager })
   }
 
   /// Opens a new [`Container`], writing the given value to the file if it does not exist.
-  pub fn create_or<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
-    let (value, manager) = FileManager::create_or(path, format, value)?;
+  pub fn create_or<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options, value: T
+  ) -> Result<Self, Manager::Error> {
+    let (value, manager) = Manager::create_or(path, format, options, value)?;
     Ok(Container { value, manager })
   }
 
   /// Opens a new [`Container`], writing the result of the given closure to the file if it does not exist.
-  pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error<Format::FormatError>>
+  pub fn create_or_else<P: AsRef<Path>, C>(
+    path: P, format: Manager::Format, options: Manager::Options, closure: C
+  ) -> Result<Self, Manager::Error>
   where C: FnOnce() -> T {
-    let (value, manager) = FileManager::create_or_else(path, format, closure)?;
+    let (value, manager) = Manager::create_or_else(path, format, options, closure)?;
     Ok(Container { value, manager })
   }
 
   /// Opens a new [`Container`], writing the default value of `T` to the file if it does not exist.
-  pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
+  pub fn create_or_default<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options
+  ) -> Result<Self, Manager::Error>
   where T: Default {
-    let (value, manager) = FileManager::create_or_default(path, format)?;
+    let (value, manager) = Manager::create_or_default(path, format, options)?;
     Ok(Container { value, manager })
   }
-}
 
-impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
-where Format: FileFormat<T> {
   /// Reads a value from the managed file, replacing the current state in memory.
-  pub fn refresh(&mut self) -> Result<T, Error<Format::FormatError>>
-  where Mode: Reading {
+  pub fn refresh(&mut self) -> Result<T, Manager::Error> {
     self.manager.read().map(|value| std::mem::replace(&mut self.value, value))
   }
 
   /// Writes the current in-memory state to the managed file.
-  pub fn commit(&self) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing {
+  pub fn commit(&self) -> Result<(), Manager::Error> {
     self.manager.write(&self.value)
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
-  pub fn overwrite(&mut self, value: T) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing {
+  pub fn overwrite(&mut self, value: T) -> Result<(), Manager::Error> {
     self.value = value;
     self.manager.write(&self.value)
   }
-}
 
-impl<T, Format, Lock, Mode> Container<T, FileManager<Format, Lock, Mode>>
-where Lock: FileLock {
   /// Unlocks and closes this [`Container`], returning the contained state.
-  pub fn close(self) -> io::Result<T> {
+  pub fn close(self) -> Result<T, Manager::Error> {
     self.manager.close().map(|()| self.value)
   }
 }

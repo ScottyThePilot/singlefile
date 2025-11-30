@@ -2,7 +2,7 @@
 extern crate serde;
 extern crate singlefile;
 
-use singlefile::container::ContainerWritable;
+use singlefile::container::StandardContainer;
 
 // You can implement a file format however you want,
 // since `singlefile` is serialization-framework agnostic.
@@ -11,7 +11,7 @@ use singlefile_formats::data::json_serde::Json;
 
 fn main() {
   // Create a new container, the data and data format must be specified somehow.
-  let mut container = ContainerWritable::<Data, Json>::create_or_default("data.json", Json)
+  let mut container = StandardContainer::<Data, Json>::create_or_default("data.json", Json, Default::default())
     .expect("failed to create data file container");
   println!("data: {:?}", container.get());
 

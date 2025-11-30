@@ -2,7 +2,7 @@
 
 use crate::error::Error;
 use crate::fs::File;
-use crate::manager::format::FileFormat;
+use crate::format::FileFormat;
 
 use std::path::Path;
 

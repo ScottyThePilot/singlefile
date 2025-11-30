@@ -4,10 +4,8 @@
 
 mod guards;
 
-use crate::error::{Error, UserError};
+use crate::error::OrUserError;
 use crate::container::*;
-use crate::manager::lock::FileLock;
-use crate::manager::mode::FileMode;
 use crate::manager::*;
 
 pub use self::guards::{
@@ -22,20 +20,10 @@ use parking_lot::RwLock;
 use std::path::Path;
 use std::sync::Arc;
 
-/// Type alias to a shared, thread-safe container that is read-only.
-pub type ContainerSharedReadonly<T, Format> = ContainerShared<T, ManagerReadonly<Format>>;
-/// Type alias to a shared, thread-safe container that is readable and writable.
-pub type ContainerSharedWritable<T, Format> = ContainerShared<T, ManagerWritable<Format>>;
-/// Type alias to a shared, thread-safe container that is readable and writable (with atomic writes).
-/// See [`Atomic`] for more information.
-pub type ContainerSharedAtomic<T, Format> = ContainerShared<T, ManagerAtomic<Format>>;
-/// Type alias to a shared, thread-safe container that is read-only, and has a shared file lock.
-pub type ContainerSharedReadonlyLocked<T, Format> = ContainerShared<T, ManagerReadonlyLocked<Format>>;
-/// Type alias to a shared, thread-safe container that is readable and writable, and has an exclusive file lock.
-pub type ContainerSharedWritableLocked<T, Format> = ContainerShared<T, ManagerWritableLocked<Format>>;
-/// Type alias to a shared, thread-safe container that is readable and writable (with atomic writes), and has an exclusive file lock.
-/// See [`Atomic`] for more information.
-pub type ContainerSharedAtomicLocked<T, Format> = ContainerShared<T, ManagerAtomicLocked<Format>>;
+/// A shortcut to [`ContainerShared<T, StandardManager<Format>>`].
+pub type StandardContainerShared<T, Format> = ContainerShared<T, StandardManager<Format>>;
+/// A shortcut to [`StandardManagerOptions`].
+pub type StandardContainerSharedOptions = StandardManagerOptions;
 
 /// A container that allows synchronous atomic reference-counted, mutable access (gated by an [`RwLock`]) to the
 /// underlying file and contents. Cloning this container will not clone the underlying contents, it will clone the
@@ -133,43 +121,45 @@ impl<T, Manager> ContainerShared<T, Manager> {
   }
 }
 
-impl<T, Format, Lock, Mode> ContainerShared<T, FileManager<Format, Lock, Mode>>
-where
-  Format: FileFormat<T>,
-  Lock: FileLock,
-  Mode: FileMode
-{
+impl<T, Manager> ContainerShared<T, Manager>
+where Manager: FileManager<T> {
   /// Opens a new [`ContainerShared`], returning an error if the file at the given path does not exist.
-  pub fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
-  where Mode: Reading {
-    Container::<T, _>::open(path, format).map(From::from)
+  pub fn open<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options
+  ) -> Result<Self, Manager::Error> {
+    Container::<T, _>::open(path, format, options).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
-  pub fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
-    Container::<T, _>::create_overwrite(path, format, value).map(From::from)
+  pub fn create_overwrite<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options, value: T
+  ) -> Result<Self, Manager::Error> {
+    Container::<T, _>::create_overwrite(path, format, options, value).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the given value to the file if it does not exist.
-  pub fn create_or<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
-    Container::<T, _>::create_or(path, format, value).map(From::from)
+  pub fn create_or<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options, value: T
+  ) -> Result<Self, Manager::Error> {
+    Container::<T, _>::create_or(path, format, options, value).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the result of the given closure to the file if it does not exist.
-  pub fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error<Format::FormatError>>
+  pub fn create_or_else<P: AsRef<Path>, C>(
+    path: P, format: Manager::Format, options: Manager::Options, closure: C
+  ) -> Result<Self, Manager::Error>
   where C: FnOnce() -> T {
-    Container::<T, _>::create_or_else(path, format, closure).map(From::from)
+    Container::<T, _>::create_or_else(path, format, options, closure).map(From::from)
   }
 
   /// Opens a new [`ContainerShared`], writing the default value of `T` to the file if it does not exist.
-  pub fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
+  pub fn create_or_default<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options
+  ) -> Result<Self, Manager::Error>
   where T: Default {
-    Container::<T, _>::create_or_default(path, format).map(From::from)
+    Container::<T, _>::create_or_default(path, format, options).map(From::from)
   }
-}
 
-impl<T, Format, Lock, Mode> ContainerShared<T, FileManager<Format, Lock, Mode>>
-where Format: FileFormat<T> {
   /// Reads a value from the managed file, replacing the current state in memory,
   /// immediately granting the caller immutable access to that state
   /// for the duration of the provided function or closure.
@@ -177,8 +167,8 @@ where Format: FileFormat<T> {
   /// The provided closure takes (1) a reference to the new state, and (2) the old state.
   ///
   /// This function acquires a mutable lock on the shared state.
-  pub fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error<Format::FormatError>>
-  where Mode: Reading, F: FnOnce(&T, T) -> R {
+  pub fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Manager::Error>
+  where F: FnOnce(&T, T) -> R {
     let mut guard = self.access_mut();
     let old_value = guard.container_mut().refresh()?;
     let guard = AccessGuardMut::downgrade(guard);
@@ -190,10 +180,10 @@ where Format: FileFormat<T> {
   /// immediately committing any changes made.
   ///
   /// This function acquires a mutable lock on the shared state.
-  pub fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, UserError<Format::FormatError, U>>
-  where Mode: Writing, F: FnOnce(&mut T) -> Result<R, U> {
+  pub fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, OrUserError<Manager::Error, U>>
+  where F: FnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_mut();
-    let ret = operation(&mut guard).map_err(UserError::User)?;
+    let ret = operation(&mut guard).map_err(OrUserError::User)?;
     self.commit_guard(AccessGuardMut::downgrade(guard))?;
     Ok(ret)
   }
@@ -203,8 +193,7 @@ where Format: FileFormat<T> {
   /// Returns the value of the previous state if the operation succeeded.
   ///
   /// This function acquires a mutable lock on the shared state.
-  pub fn refresh(&self) -> Result<T, Error<Format::FormatError>>
-  where Mode: Reading {
+  pub fn refresh(&self) -> Result<T, Manager::Error> {
     AccessGuardMut::container_mut(&mut self.access_mut()).refresh()
   }
 
@@ -212,21 +201,18 @@ where Format: FileFormat<T> {
   ///
   /// This function acquires an immutable lock on the shared state.
   /// Don't call this if you currently have an access guard, use [`ContainerShared::commit_guard`] instead.
-  pub fn commit(&self) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing {
+  pub fn commit(&self) -> Result<(), Manager::Error> {
     AccessGuard::container(&self.access()).commit()
   }
 
   /// Writes to the managed file given an access guard.
-  pub fn commit_guard(&self, guard: AccessGuard<'_, T, FileManager<Format, Lock, Mode>>)
-  -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing {
+  pub fn commit_guard(&self, guard: AccessGuard<'_, T, Manager>)
+  -> Result<(), Manager::Error> {
     AccessGuard::container(&guard).commit()
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
-  pub fn overwrite(&self, value: T) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing {
+  pub fn overwrite(&self, value: T) -> Result<(), Manager::Error> {
     AccessGuardMut::container_mut(&mut self.access_mut()).overwrite(value)
   }
 }

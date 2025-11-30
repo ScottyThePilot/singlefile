@@ -7,13 +7,13 @@ use singlefile_formats::data::json_serde::Json;
 use std::{fs, mem};
 
 #[test]
-fn container_writable() {
-  use singlefile::container::ContainerWritable;
+fn container() {
+  use singlefile::container::StandardContainer;
 
   let temp_dir = tempfile::tempdir().unwrap();
   let path = temp_dir.path().join("data.json");
 
-  let mut container = ContainerWritable::<Data, Json>::create_or_default(&path, Json)
+  let mut container = StandardContainer::<Data, Json>::create_or_default(&path, Json, Default::default())
     .expect("failed to create container for data.json");
 
   assert!(path.exists());
@@ -33,8 +33,8 @@ fn container_writable() {
 
 #[test]
 #[cfg(feature = "shared")]
-fn container_shared_writable() {
-  use singlefile::container_shared::ContainerSharedWritable;
+fn container_shared() {
+  use singlefile::container_shared::StandardContainerShared;
 
   use std::thread;
   use std::convert::Infallible;
@@ -42,7 +42,7 @@ fn container_shared_writable() {
   let temp_dir = tempfile::tempdir().unwrap();
   let path = temp_dir.path().join("data.json");
 
-  let container = ContainerSharedWritable::<Data, Json>::create_or_default(&path, Json)
+  let container = StandardContainerShared::<Data, Json>::create_or_default(&path, Json, Default::default())
     .expect("failed to create container for data.json");
 
   let magic_number = container.operate(|data| data.number);

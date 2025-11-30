@@ -4,10 +4,8 @@
 
 mod guards;
 
-use crate::error::{Error, UserError};
+use crate::error::OrUserError;
 use crate::container::*;
-use crate::manager::lock::FileLock;
-use crate::manager::mode::FileMode;
 use crate::manager::*;
 
 pub use self::guards::{
@@ -22,20 +20,10 @@ use tokio::sync::RwLock;
 use std::path::Path;
 use std::sync::Arc;
 
-/// Type alias to a shared, asynchronous, thread-safe container that is read-only.
-pub type ContainerSharedAsyncReadonly<T, Format> = ContainerSharedAsync<T, ManagerReadonly<Format>>;
-/// Type alias to a shared, asynchronous, thread-safe container that is readable and writable.
-pub type ContainerSharedAsyncWritable<T, Format> = ContainerSharedAsync<T, ManagerWritable<Format>>;
-/// Type alias to a shared, asynchronous, thread-safe container that is readable and writable (with atomic writes).
-/// See [`Atomic`] for more information.
-pub type ContainerSharedAsyncAtomic<T, Format> = ContainerSharedAsync<T, ManagerAtomic<Format>>;
-/// Type alias to a shared, asynchronous, thread-safe container that is read-only, and has a shared file lock.
-pub type ContainerSharedAsyncReadonlyLocked<T, Format> = ContainerSharedAsync<T, ManagerReadonlyLocked<Format>>;
-/// Type alias to a shared, asynchronous, thread-safe container that is readable and writable, and has an exclusive file lock.
-pub type ContainerSharedAsyncWritableLocked<T, Format> = ContainerSharedAsync<T, ManagerWritableLocked<Format>>;
-/// Type alias to a shared, asynchronous, thread-safe container that is readable and writable (with atomic writes), and has an exclusive file lock.
-/// See [`Atomic`] for more information.
-pub type ContainerSharedAsyncAtomicLocked<T, Format> = ContainerSharedAsync<T, ManagerAtomicLocked<Format>>;
+/// A shortcut to [`ContainerSharedAsync<T, StandardManager<Format>>`].
+pub type StandardContainerSharedAsync<T, Format> = ContainerSharedAsync<T, StandardManager<Format>>;
+/// A shortcut to [`StandardManagerOptions`].
+pub type StandardContainerSharedAsyncOptions = StandardManagerOptions;
 
 macro_rules! spawn_blocking {
   ($expr:expr) => (tokio::task::spawn_blocking(move || $expr).await.expect("blocking task failed"));
@@ -137,56 +125,56 @@ impl<T, Manager> ContainerSharedAsync<T, Manager> {
   }
 }
 
-impl<T, Format, Lock, Mode> ContainerSharedAsync<T, FileManager<Format, Lock, Mode>>
+impl<T, Manager> ContainerSharedAsync<T, Manager>
 where
-  Format: FileFormat<T> + Send + 'static,
-  Format::FormatError: Send + 'static,
-  Lock: FileLock,
-  Mode: FileMode,
-  T: Send + 'static
+  T: Send + Sync + 'static,
+  Manager: FileManager<T> + Send + Sync + 'static,
+  Manager::Format: Send,
+  Manager::Options: Send,
+  Manager::Error: Send
 {
   /// Opens a new [`ContainerSharedAsync`], returning an error if the file at the given path does not exist.
-  pub async fn open<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
-  where Mode: Reading {
+  pub async fn open<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options
+  ) -> Result<Self, Manager::Error> {
     let path = path.as_ref().to_owned();
-    spawn_blocking!(Container::<T, _>::open(path, format)).map(From::from)
+    spawn_blocking!(Container::<T, _>::open(path, format, options)).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], creating a file at the given path if it does not exist, and overwriting its contents if it does.
-  pub async fn create_overwrite<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
+  pub async fn create_overwrite<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options, value: T
+  ) -> Result<Self, Manager::Error> {
     let path = path.as_ref().to_owned();
-    spawn_blocking!(Container::<T, _>::create_overwrite(path, format, value)).map(From::from)
+    spawn_blocking!(Container::<T, _>::create_overwrite(path, format, options, value)).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], writing the given value to the file if it does not exist.
-  pub async fn create_or<P: AsRef<Path>>(path: P, format: Format, value: T) -> Result<Self, Error<Format::FormatError>> {
+  pub async fn create_or<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options, value: T
+  ) -> Result<Self, Manager::Error> {
     let path = path.as_ref().to_owned();
-    spawn_blocking!(Container::<T, _>::create_or(path, format, value)).map(From::from)
+    spawn_blocking!(Container::<T, _>::create_or(path, format, options, value)).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], writing the result of the given closure to the file if it does not exist.
-  pub async fn create_or_else<P: AsRef<Path>, C>(path: P, format: Format, closure: C) -> Result<Self, Error<Format::FormatError>>
+  pub async fn create_or_else<P: AsRef<Path>, C>(
+    path: P, format: Manager::Format, options: Manager::Options, closure: C
+  ) -> Result<Self, Manager::Error>
   where C: FnOnce() -> T + Send + 'static {
     let path = path.as_ref().to_owned();
-    spawn_blocking!(Container::<T, _>::create_or_else(path, format, closure)).map(From::from)
+    spawn_blocking!(Container::<T, _>::create_or_else(path, format, options, closure)).map(From::from)
   }
 
   /// Opens a new [`ContainerSharedAsync`], writing the default value of `T` to the file if it does not exist.
-  pub async fn create_or_default<P: AsRef<Path>>(path: P, format: Format) -> Result<Self, Error<Format::FormatError>>
+  pub async fn create_or_default<P: AsRef<Path>>(
+    path: P, format: Manager::Format, options: Manager::Options
+  ) -> Result<Self, Manager::Error>
   where T: Default {
     let path = path.as_ref().to_owned();
-    spawn_blocking!(Container::<T, _>::create_or_default(path, format)).map(From::from)
+    spawn_blocking!(Container::<T, _>::create_or_default(path, format, options)).map(From::from)
   }
-}
 
-impl<T, Format, Lock, Mode> ContainerSharedAsync<T, FileManager<Format, Lock, Mode>>
-where
-  Format: FileFormat<T> + Send + Sync + 'static,
-  Format::FormatError: Send + 'static,
-  Lock: 'static,
-  Mode: 'static,
-  T: Send + Sync + 'static
-{
   /// Grants the caller immutable access to the underlying value `T`,
   /// but only for the duration of the provided function or closure.
   /// The contents of `operation` will be treated as if they will block,
@@ -214,8 +202,8 @@ where
   /// The provided closure takes (1) a reference to the new state, and (2) the old state.
   ///
   /// This function acquires a mutable lock on the shared state.
-  pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Error<Format::FormatError>>
-  where Mode: Reading, F: FnOnce(&T, T) -> R {
+  pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Manager::Error>
+  where F: FnOnce(&T, T) -> R {
     let mut guard = self.access_owned_mut().await;
     let (old_value, guard) = spawn_blocking!(guard.container_mut().refresh().map(|t| (t, guard)))?;
     let guard = OwnedAccessGuardMut::downgrade(guard);
@@ -227,10 +215,10 @@ where
   /// immediately committing any changes made as long as no error was returned.
   ///
   /// This function acquires a mutable lock on the shared state.
-  pub async fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, UserError<Format::FormatError, U>>
-  where Mode: Writing, F: FnOnce(&mut T) -> Result<R, U> {
+  pub async fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, OrUserError<Manager::Error, U>>
+  where F: FnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_owned_mut().await;
-    let ret = operation(&mut guard).map_err(UserError::User)?;
+    let ret = operation(&mut guard).map_err(OrUserError::User)?;
     self.commit_guard(OwnedAccessGuardMut::downgrade(guard)).await?;
     Ok(ret)
   }
@@ -240,8 +228,7 @@ where
   /// Returns the value of the previous state if the operation succeeded.
   ///
   /// This function acquires a mutable lock on the shared state.
-  pub async fn refresh(&self) -> Result<T, Error<Format::FormatError>>
-  where Mode: Reading {
+  pub async fn refresh(&self) -> Result<T, Manager::Error> {
     let mut guard = self.access_owned_mut().await;
     spawn_blocking!(guard.container_mut().refresh())
   }
@@ -250,22 +237,18 @@ where
   ///
   /// This function acquires an immutable lock on the shared state.
   /// Don't call this if you currently have an access guard, use [`ContainerSharedAsync::commit_guard`] instead.
-  pub async fn commit(&self) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing {
+  pub async fn commit(&self) -> Result<(), Manager::Error> {
     let guard = self.access_owned().await;
     self.commit_guard(guard).await
   }
 
   /// Writes to the managed file given an access guard.
-  pub async fn commit_guard(&self, guard: OwnedAccessGuard<T, FileManager<Format, Lock, Mode>>)
-  -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing {
+  pub async fn commit_guard(&self, guard: OwnedAccessGuard<T, Manager>) -> Result<(), Manager::Error> {
     spawn_blocking!(guard.container().commit())
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
-  pub async fn overwrite(&self, value: T) -> Result<(), Error<Format::FormatError>>
-  where Mode: Writing {
+  pub async fn overwrite(&self, value: T) -> Result<(), Manager::Error> {
     let mut guard = self.access_owned_mut().await;
     spawn_blocking!(guard.container_mut().overwrite(value))
   }
