@@ -15,7 +15,7 @@ use std::io::{Read, Write};
 /// An error that can occur while using [`Toml`].
 #[derive(Debug, Error)]
 pub enum TomlError {
-  /// An error occured while reading data to the string buffer.
+  /// An error occurred while reading data to the string buffer.
   #[error(transparent)]
   IoError(#[from] std::io::Error),
   /// An error occurred while serializing.

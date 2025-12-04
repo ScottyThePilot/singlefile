@@ -27,7 +27,7 @@ impl From<Error<io::Error>> for io::Error {
   fn from(err: Error<io::Error>) -> Self {
     match err {
       Error::Format(err) | Error::Io(err) => err,
-      Error::Other(err) => io::Error::new(io::ErrorKind::Other, err)
+      Error::Other(err) => io::Error::other(err)
     }
   }
 }
