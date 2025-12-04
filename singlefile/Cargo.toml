@@ -45,6 +45,9 @@ shared = ["dep:parking_lot", "tokio?/parking_lot"]
 # enables shared async containers
 shared-async = ["dep:tokio"]
 
+# enables the atomic file manager
+atomic = ["fs-err"]
+
 fs-err = ["fs-err3"]
 fs-err2 = ["dep:fs-err2", "fs4/fs-err2"]
 fs-err3 = ["dep:fs-err3", "fs4/fs-err3"]

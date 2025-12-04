@@ -1,5 +1,8 @@
 //! This module contains the [`FileManager`] trait which gives more direct access to a file.
 
+#[cfg_attr(docsrs, doc(cfg(feature = "atomic")))]
+#[cfg(feature = "atomic")]
+pub mod atomic;
 pub mod standard;
 
 use crate::error::{Error, OtherError};
