@@ -30,13 +30,13 @@ impl<'a, T, Manager> AccessGuard<'a, T, Manager> {
     AccessGuard { inner }
   }
 
-  /// Gets a reference to the file manager in the underlying [`Container`].
+  /// Gets an immutable reference to the file manager in the underlying [`Container`].
   #[inline]
   pub fn manager(&self) -> &Manager {
     Container::manager(&self.inner)
   }
 
-  /// Gets a reference to the underlying [`Container`].
+  /// Gets an immutable reference to the underlying [`Container`].
   #[inline]
   pub fn container(&self) -> &Container<T, Manager> {
     &self.inner
@@ -79,10 +79,16 @@ impl<'a, T, Manager> AccessGuardMut<'a, T, Manager> {
     AccessGuardMut { inner }
   }
 
-  /// Gets a reference to the file manager in the underlying [`Container`].
+  /// Gets an immutable reference to the file manager in the underlying [`Container`].
   #[inline]
   pub fn manager(&self) -> &Manager {
     Container::manager(&self.inner)
+  }
+
+  /// Gets a mutable reference to the file manager in the underlying [`Container`].
+  #[inline]
+  pub fn manager_mut(&mut self) -> &mut Manager {
+    Container::manager_mut(&mut self.inner)
   }
 
   /// Gets an immutable reference to the underlying [`Container`].
@@ -147,13 +153,13 @@ impl<T, Manager> OwnedAccessGuard<T, Manager> {
     OwnedAccessGuard { inner }
   }
 
-  /// Gets a reference to the file manager in the underlying [`Container`].
+  /// Gets an immutable reference to the file manager in the underlying [`Container`].
   #[inline]
   pub fn manager(&self) -> &Manager {
     Container::manager(&self.inner)
   }
 
-  /// Gets a reference to the underlying [`Container`].
+  /// Gets an immutable reference to the underlying [`Container`].
   #[inline]
   pub fn container(&self) -> &Container<T, Manager> {
     &self.inner
@@ -196,10 +202,16 @@ impl<T, Manager> OwnedAccessGuardMut<T, Manager> {
     OwnedAccessGuardMut { inner }
   }
 
-  /// Gets a reference to the file manager in the underlying [`Container`].
+  /// Gets an immutable reference to the file manager in the underlying [`Container`].
   #[inline]
   pub fn manager(&self) -> &Manager {
     Container::manager(&self.inner)
+  }
+
+  /// Gets a mutable reference to the file manager in the underlying [`Container`].
+  #[inline]
+  pub fn manager_mut(&mut self) -> &mut Manager {
+    Container::manager_mut(&mut self.inner)
   }
 
   /// Gets an immutable reference to the underlying [`Container`].

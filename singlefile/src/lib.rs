@@ -117,7 +117,7 @@
 //! [`Container`]: crate::container::Container
 //! [`ContainerShared`]: crate::container_shared::ContainerShared
 //! [`ContainerSharedAsync`]: crate::container_shared_async::ContainerSharedAsync
-//! [`FileFormat`]: crate::manager::format::FileFormat
+//! [`FileFormat`]: crate::format::FileFormat
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]

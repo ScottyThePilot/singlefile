@@ -40,7 +40,9 @@ features = ["rt", "sync", "macros"]
 # by default, tokio will use parking_lot
 default = ["tokio-parking-lot"]
 
+# enables shared containers
 shared = ["dep:parking_lot", "tokio?/parking_lot"]
+# enables shared async containers
 shared-async = ["dep:tokio"]
 
 fs-err = ["fs-err3"]

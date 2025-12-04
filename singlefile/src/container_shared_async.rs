@@ -221,7 +221,7 @@ where
   where F: AsyncFnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_owned_mut().await;
     let ret = operation(&mut guard).await.map_err(OrUserError::User)?;
-    Self::commit_with_guard(OwnedAccessGuardMut::downgrade(guard)).await?;
+    Self::commit_with_guard_owned(guard).await?;
     Ok(ret)
   }
 
@@ -238,15 +238,18 @@ where
   /// Writes the current in-memory state to the managed file.
   ///
   /// This function acquires an immutable lock on the shared state.
-  /// Don't call this if you currently have an access guard, use [`ContainerSharedAsync::commit_with_guard`] instead.
+  /// Don't call this if you currently have an access guard,
+  /// use [`ContainerSharedAsync::commit_with_guard_owned`] instead.
+  ///
+  /// Alternatively, you may use [`ContainerSharedAsync::operate_mut_commit`].
   pub async fn commit(&self) -> Result<(), Manager::Error> {
-    let guard = self.access_owned().await;
-    Self::commit_with_guard(guard).await
+    let guard = self.access_owned_mut().await;
+    Self::commit_with_guard_owned(guard).await
   }
 
-  /// Writes to the managed file given an access guard.
-  pub async fn commit_with_guard(guard: OwnedAccessGuard<T, Manager>) -> Result<(), Manager::Error> {
-    spawn_blocking!(guard.container().commit())
+  /// Writes to the managed file given an owned access guard.
+  pub async fn commit_with_guard_owned(mut guard: OwnedAccessGuardMut<T, Manager>) -> Result<(), Manager::Error> {
+    spawn_blocking!(guard.container_mut().commit())
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.

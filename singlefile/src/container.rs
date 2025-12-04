@@ -36,7 +36,7 @@ impl<T, Manager> Container<T, Manager> {
     self.manager
   }
 
-  /// Gets a reference to the contained file manager.
+  /// Gets an immutable reference to the contained file manager.
   ///
   /// It is inadvisable to manipulate the manager manually.
   #[inline(always)]
@@ -44,7 +44,15 @@ impl<T, Manager> Container<T, Manager> {
     &self.manager
   }
 
-  /// Gets a reference to the contained value.
+  /// Gets a mutable reference to the contained file manager.
+  ///
+  /// It is inadvisable to manipulate the manager manually.
+  #[inline(always)]
+  pub const fn manager_mut(&mut self) -> &mut Manager {
+    &mut self.manager
+  }
+
+  /// Gets an immutable reference to the contained value.
   ///
   /// You may also operate on the container directly with [`Deref`] instead.
   #[inline(always)]
@@ -56,7 +64,7 @@ impl<T, Manager> Container<T, Manager> {
   ///
   /// You may also operate on the container directly with [`DerefMut`] instead.
   #[inline(always)]
-  pub fn get_mut(&mut self) -> &mut T {
+  pub const fn get_mut(&mut self) -> &mut T {
     &mut self.value
   }
 }
@@ -67,7 +75,7 @@ where Manager: FileManager<T> {
   pub fn open<P: AsRef<Path>>(
     path: P, format: Manager::Format, options: Manager::Options
   ) -> Result<Self, Manager::Error> {
-    let manager = Manager::open(path, format, options)?;
+    let mut manager = Manager::open(path, format, options)?;
     let value = manager.read()?;
     Ok(Container { value, manager })
   }
@@ -112,7 +120,7 @@ where Manager: FileManager<T> {
   }
 
   /// Writes the current in-memory state to the managed file.
-  pub fn commit(&self) -> Result<(), Manager::Error> {
+  pub fn commit(&mut self) -> Result<(), Manager::Error> {
     self.manager.write(&self.value)
   }
 

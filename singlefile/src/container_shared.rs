@@ -184,7 +184,7 @@ where Manager: FileManager<T> {
   where F: FnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_mut();
     let ret = operation(&mut guard).map_err(OrUserError::User)?;
-    Self::commit_with_guard(AccessGuardMut::downgrade(guard))?;
+    Self::commit_with_guard(guard)?;
     Ok(ret)
   }
 
@@ -200,14 +200,24 @@ where Manager: FileManager<T> {
   /// Writes the current in-memory state to the managed file.
   ///
   /// This function acquires an immutable lock on the shared state.
-  /// Don't call this if you currently have an access guard, use [`ContainerShared::commit_with_guard`] instead.
+  /// Don't call this if you currently have an access guard,
+  /// use [`ContainerShared::commit_with_guard_owned`]
+  /// or [`ContainerShared::commit_with_guard`] instead.
+  ///
+  /// Alternatively, you may use [`ContainerShared::operate_mut_commit`].
   pub fn commit(&self) -> Result<(), Manager::Error> {
-    AccessGuard::container(&self.access()).commit()
+    let guard = self.access_mut();
+    Self::commit_with_guard(guard)
   }
 
   /// Writes to the managed file given an access guard.
-  pub fn commit_with_guard(guard: AccessGuard<'_, T, Manager>) -> Result<(), Manager::Error> {
-    AccessGuard::container(&guard).commit()
+  pub fn commit_with_guard(mut guard: AccessGuardMut<'_, T, Manager>) -> Result<(), Manager::Error> {
+    AccessGuardMut::container_mut(&mut guard).commit()
+  }
+
+  /// Writes to the managed file given an owned access guard.
+  pub fn commit_with_guard_owned(mut guard: OwnedAccessGuardMut<T, Manager>) -> Result<(), Manager::Error> {
+    OwnedAccessGuardMut::container_mut(&mut guard).commit()
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.

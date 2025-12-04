@@ -12,7 +12,7 @@ use std::io;
 pub enum Error<FE> {
   /// An error caused by an implementation of [`FileFormat`].
   ///
-  /// [`FileFormat`]: crate::manager::format::FileFormat
+  /// [`FileFormat`]: crate::format::FileFormat
   #[error("format error: {0}")]
   Format(FE),
   /// An error caused by the filesystem.
@@ -90,7 +90,7 @@ impl<T, U> From<T> for OrUserError<T, U> {
 pub enum UserError<FE, U> {
   /// An error caused by an implementation of [`FileFormat`].
   ///
-  /// [`FileFormat`]: crate::manager::format::FileFormat
+  /// [`FileFormat`]: crate::format::FileFormat
   #[error("format error: {0}")]
   Format(FE),
   /// An error caused by the filesystem.

@@ -65,10 +65,10 @@ pub trait FileManager<T>: Sized {
   }
 
   /// Reads a value from the file managed by this [`FileManager`].
-  fn read(&self) -> Result<T, Self::Error>;
+  fn read(&mut self) -> Result<T, Self::Error>;
 
   /// Writes a value to the file managed by this [`FileManager`].
-  fn write(&self, value: &T) -> Result<(), Self::Error>;
+  fn write(&mut self, value: &T) -> Result<(), Self::Error>;
 
   /// Closes this [`FileManager`], returning the `Format` and `Options` parameters used to construct it.
   fn into_inner(self) -> Result<(Self::Format, Self::Options), Self::Error>;
@@ -103,12 +103,12 @@ where Format: FileFormat<T> {
     Ok(StandardManager { format, options, file })
   }
 
-  fn read(&self) -> Result<T, Self::Error> {
+  fn read(&mut self) -> Result<T, Self::Error> {
     self.options.mode.must_read()?;
     read(&self.format, &self.file)
   }
 
-  fn write(&self, value: &T) -> Result<(), Self::Error> {
+  fn write(&mut self, value: &T) -> Result<(), Self::Error> {
     self.options.mode.must_write()?;
     write(&self.format, &self.file, value)
   }
