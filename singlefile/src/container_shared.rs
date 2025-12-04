@@ -20,10 +20,19 @@ use parking_lot::RwLock;
 use std::path::Path;
 use std::sync::Arc;
 
-/// A shortcut to [`ContainerShared<T, StandardManager<Format>>`].
-pub type StandardContainerShared<T, Format> = ContainerShared<T, StandardManager<Format>>;
-/// A shortcut to [`StandardManagerOptions`].
-pub type StandardContainerSharedOptions = StandardManagerOptions;
+/// A shortcut to [`ContainerShared<T, StandardManager<Format>>`][crate::manager::standard::StandardManager].
+pub type StandardContainerShared<T, Format> = ContainerShared<T, crate::manager::standard::StandardManager<Format>>;
+/// A shortcut to [`StandardManagerOptions`][crate::manager::standard::StandardManagerOptions].
+pub type StandardContainerSharedOptions = crate::manager::standard::StandardManagerOptions;
+
+/// A shortcut to [`ContainerShared<T, AtomicManager<Format>>`][crate::manager::atomic::AtomicManager].
+#[cfg_attr(docsrs, doc(cfg(feature = "atomic")))]
+#[cfg(feature = "atomic")]
+pub type AtomicContainerShared<T, Format, Support> = ContainerShared<T, crate::manager::atomic::AtomicManager<Format, Support>>;
+/// A shortcut to [`AtomicManagerOptions`][crate::manager::atomic::AtomicManagerOptions].
+#[cfg_attr(docsrs, doc(cfg(feature = "atomic")))]
+#[cfg(feature = "atomic")]
+pub type AtomicContainerSharedOptions<Support> = crate::manager::atomic::AtomicManagerOptions<Support>;
 
 /// A container that allows synchronous atomic reference-counted, mutable access (gated by an [`RwLock`]) to the
 /// underlying file and contents. Cloning this container will not clone the underlying contents, it will clone the

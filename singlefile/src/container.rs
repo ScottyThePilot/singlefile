@@ -5,10 +5,19 @@ use crate::manager::*;
 use std::ops::{Deref, DerefMut};
 use std::path::Path;
 
-/// A shortcut to [`Container<T, StandardManager<Format>>`].
-pub type StandardContainer<T, Format> = Container<T, StandardManager<Format>>;
-/// A shortcut to [`StandardManagerOptions`].
-pub type StandardContainerOptions = StandardManagerOptions;
+/// A shortcut to [`Container<T, StandardManager<Format>>`][crate::manager::standard::StandardManager].
+pub type StandardContainer<T, Format> = Container<T, crate::manager::standard::StandardManager<Format>>;
+/// A shortcut to [`StandardManagerOptions`][crate::manager::standard::StandardManagerOptions].
+pub type StandardContainerOptions = crate::manager::standard::StandardManagerOptions;
+
+/// A shortcut to [`Container<T, AtomicManager<Format>>`][crate::manager::atomic::AtomicManager].
+#[cfg_attr(docsrs, doc(cfg(feature = "atomic")))]
+#[cfg(feature = "atomic")]
+pub type AtomicContainer<T, Format, Support> = Container<T, crate::manager::atomic::AtomicManager<Format, Support>>;
+/// A shortcut to [`AtomicManagerOptions`][crate::manager::atomic::AtomicManagerOptions].
+#[cfg_attr(docsrs, doc(cfg(feature = "atomic")))]
+#[cfg(feature = "atomic")]
+pub type AtomicContainerOptions<Support> = crate::manager::atomic::AtomicManagerOptions<Support>;
 
 /// A basic owned container allowing managed access to some underlying file.
 #[derive(Debug)]
