@@ -1,6 +1,6 @@
 //! Container constructs providing single-ownership managed access to a file.
 
-use crate::manager::*;
+use crate::manager::FileManager;
 
 use std::ops::{Deref, DerefMut};
 use std::path::Path;
@@ -124,16 +124,19 @@ where Manager: FileManager<T> {
   }
 
   /// Reads a value from the managed file, replacing the current state in memory.
+  #[doc(alias = "load", alias = "reload")]
   pub fn refresh(&mut self) -> Result<T, Manager::Error> {
     self.manager.read().map(|value| std::mem::replace(&mut self.value, value))
   }
 
   /// Writes the current in-memory state to the managed file.
+  #[doc(alias = "store", alias = "save")]
   pub fn commit(&mut self) -> Result<(), Manager::Error> {
     self.manager.write(&self.value)
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
+  #[doc(alias = "replace")]
   pub fn overwrite(&mut self, value: T) -> Result<(), Manager::Error> {
     self.value = value;
     self.manager.write(&self.value)

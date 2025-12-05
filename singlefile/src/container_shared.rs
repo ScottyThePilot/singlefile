@@ -5,8 +5,8 @@
 mod guards;
 
 use crate::error::OrUserError;
-use crate::container::*;
-use crate::manager::*;
+use crate::container::Container;
+use crate::manager::FileManager;
 
 pub use self::guards::{
   AccessGuard,
@@ -176,6 +176,7 @@ where Manager: FileManager<T> {
   /// The provided closure takes (1) a reference to the new state, and (2) the old state.
   ///
   /// This function acquires a mutable lock on the shared state.
+  #[doc(alias = "operate_load", alias = "operate_reload")]
   pub fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Manager::Error>
   where F: FnOnce(&T, T) -> R {
     let mut guard = self.access_mut();
@@ -189,6 +190,7 @@ where Manager: FileManager<T> {
   /// immediately committing any changes made.
   ///
   /// This function acquires a mutable lock on the shared state.
+  #[doc(alias = "operate_mut_store", alias = "operate_mut_save")]
   pub fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, OrUserError<Manager::Error, U>>
   where F: FnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_mut();
@@ -202,6 +204,7 @@ where Manager: FileManager<T> {
   /// Returns the value of the previous state if the operation succeeded.
   ///
   /// This function acquires a mutable lock on the shared state.
+  #[doc(alias = "load", alias = "reload")]
   pub fn refresh(&self) -> Result<T, Manager::Error> {
     AccessGuardMut::container_mut(&mut self.access_mut()).refresh()
   }
@@ -214,6 +217,7 @@ where Manager: FileManager<T> {
   /// or [`ContainerShared::commit_with_guard`] instead.
   ///
   /// Alternatively, you may use [`ContainerShared::operate_mut_commit`].
+  #[doc(alias = "store", alias = "save")]
   pub fn commit(&self) -> Result<(), Manager::Error> {
     let guard = self.access_mut();
     Self::commit_with_guard(guard)
@@ -230,6 +234,7 @@ where Manager: FileManager<T> {
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
+  #[doc(alias = "replace")]
   pub fn overwrite(&self, value: T) -> Result<(), Manager::Error> {
     AccessGuardMut::container_mut(&mut self.access_mut()).overwrite(value)
   }

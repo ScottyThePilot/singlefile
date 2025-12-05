@@ -5,8 +5,8 @@
 mod guards;
 
 use crate::error::OrUserError;
-use crate::container::*;
-use crate::manager::*;
+use crate::container::Container;
+use crate::manager::FileManager;
 
 pub use self::guards::{
   AccessGuard,
@@ -213,6 +213,7 @@ where
   /// The provided closure takes (1) a reference to the new state, and (2) the old state.
   ///
   /// This function acquires a mutable lock on the shared state.
+  #[doc(alias = "operate_load", alias = "operate_reload")]
   pub async fn operate_refresh<F, R>(&self, operation: F) -> Result<R, Manager::Error>
   where F: AsyncFnOnce(&T, T) -> R {
     let mut guard = self.access_owned_mut().await;
@@ -226,6 +227,7 @@ where
   /// immediately committing any changes made as long as no error was returned.
   ///
   /// This function acquires a mutable lock on the shared state.
+  #[doc(alias = "operate_mut_store", alias = "operate_mut_save")]
   pub async fn operate_mut_commit<F, R, U>(&self, operation: F) -> Result<R, OrUserError<Manager::Error, U>>
   where F: AsyncFnOnce(&mut T) -> Result<R, U> {
     let mut guard = self.access_owned_mut().await;
@@ -239,6 +241,7 @@ where
   /// Returns the value of the previous state if the operation succeeded.
   ///
   /// This function acquires a mutable lock on the shared state.
+  #[doc(alias = "load", alias = "reload")]
   pub async fn refresh(&self) -> Result<T, Manager::Error> {
     let mut guard = self.access_owned_mut().await;
     spawn_blocking!(guard.container_mut().refresh())
@@ -251,6 +254,7 @@ where
   /// use [`ContainerSharedAsync::commit_with_guard_owned`] instead.
   ///
   /// Alternatively, you may use [`ContainerSharedAsync::operate_mut_commit`].
+  #[doc(alias = "store", alias = "save")]
   pub async fn commit(&self) -> Result<(), Manager::Error> {
     let guard = self.access_owned_mut().await;
     Self::commit_with_guard_owned(guard).await
