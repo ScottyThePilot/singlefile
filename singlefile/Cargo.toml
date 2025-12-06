@@ -29,8 +29,15 @@ optional = true
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
-singlefile-formats = { path = "../singlefile-formats", features = ["json-serde"] }
 tempfile = "3.8"
+
+[dev-dependencies.singlefile]
+path = "."
+features = ["atomic", "shared", "shared-async", "fs-err"]
+
+[dev-dependencies.singlefile-formats]
+path = "../singlefile-formats"
+features = ["cbor-serde", "json-serde", "toml-serde"]
 
 [dev-dependencies.tokio]
 version = "1"

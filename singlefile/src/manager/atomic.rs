@@ -84,13 +84,34 @@ impl<Support> AtomicManagerOptions<Support> where Support: AtomicFileSupport {
     Ok(file)
   }
 
+  /// Opens a new [`File`] with file options based on this [`AtomicManagerOptions`], or create it if it does not exist.
+  pub fn create<P: Into<PathBuf>>(&self, path: P) -> io::Result<File> {
+    let file = OpenOptions::new()
+      .read(true).write(true)
+      .create(true).truncate(false)
+      .open(path)?;
+    self.lock.lock(&file)?;
+    Ok(file)
+  }
+
+  /// Creates a new [`File`] with file options based on this [`AtomicManagerOptions`], failing if it already exists.
+  pub fn create_new<P: Into<PathBuf>>(&self, path: P) -> io::Result<File> {
+    let file = OpenOptions::new()
+      .read(true).write(true)
+      .create_new(true)
+      .open(path)?;
+    self.lock.lock(&file)?;
+    Ok(file)
+  }
+
   /// Writes a value, `T`, to a file given a [`FileFormat`], in an atomic manner.
   pub fn write_atomic<T, Format>(&mut self, format: &Format, file: &mut File, value: &T) -> Result<(), Error<Format::FormatError>>
   where Format: FileFormat<T> {
     let new_file_path = self.support.pick_temporary_file_location(file.path())?;
-    let new_file = self.open(new_file_path)?;
+    let new_file = self.create_new(new_file_path)?;
     format.to_writer_buffered(&new_file, value)
       .map_err(Error::Format)?;
+    new_file.sync_all()?;
     replace_file(file, new_file)?;
     Ok(())
   }

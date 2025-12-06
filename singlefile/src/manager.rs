@@ -9,14 +9,12 @@ use crate::error::{Error, OtherError};
 use crate::format::FileFormat;
 use crate::fs::{File, OpenOptions};
 
-pub use self::standard::{StandardManager, StandardManagerOptions};
-
 use std::io::{self, prelude::*, SeekFrom};
 use std::path::{Path, PathBuf};
 
 /// A [`FileManager`] and an associated [`FileFormat`] form the basis for which a file is managed.
 ///
-/// Usually, wherever a [`FileManager`] is needed, you can use the standard implementation, [`StandardManager`].
+/// Usually, wherever a [`FileManager`] is needed, you can use the standard implementation, [`StandardManager`][self::standard::StandardManager].
 /// You only need to manually implement [`FileManager`] if you would like to customize behavior with respect to
 /// file reading/writing.
 ///
@@ -30,7 +28,7 @@ pub trait FileManager<T>: Sized {
   type Options;
 
   /// The error type returned by methods of this [`FileManager`].
-  type Error: From<Error<<Self::Format as FileFormat<T>>::FormatError>>;
+  type Error: std::error::Error + From<Error<<Self::Format as FileFormat<T>>::FormatError>>;
 
   /// Open a new instance of this [`FileManager`], returning an error if the file at the given path does not exist.
   fn open<P: AsRef<Path>>(
@@ -112,9 +110,9 @@ where Format: FileFormat<T> {
 /// Reads a value, `T`, from a file given a [`FileFormat`].
 pub fn read<T, Format>(format: &Format, mut file: &File) -> Result<T, Error<Format::FormatError>>
 where Format: FileFormat<T> {
+  file.seek(SeekFrom::Start(0))?;
   let value = format.from_reader_buffered(file)
     .map_err(Error::Format)?;
-  file.seek(SeekFrom::Start(0))?;
   Ok(value)
 }
 
@@ -122,9 +120,9 @@ where Format: FileFormat<T> {
 pub fn write<T, Format>(format: &Format, mut file: &File, value: &T) -> Result<(), Error<Format::FormatError>>
 where Format: FileFormat<T> {
   file.set_len(0)?;
+  file.seek(SeekFrom::Start(0))?;
   format.to_writer_buffered(file, value)
     .map_err(Error::Format)?;
-  file.seek(SeekFrom::Start(0))?;
   file.sync_all()?;
   Ok(())
 }
