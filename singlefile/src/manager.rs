@@ -144,10 +144,28 @@ pub enum FileMode {
 impl FileMode {
   /// Opens a new [`File`] with file options based on this [`FileMode`].
   pub fn open<P: Into<PathBuf> + AsRef<Path>>(self, path: P) -> io::Result<File> {
-    let mut open_options = OpenOptions::new();
-    open_options.read(self.can_read());
-    open_options.write(self.can_write());
-    open_options.open(path)
+    OpenOptions::new()
+      .read(self.can_read())
+      .write(self.can_write())
+      .open(path)
+  }
+
+  /// Opens a new [`File`] with file options based on this [`FileMode`], or create it if it does not exist.
+  pub fn create<P: Into<PathBuf> + AsRef<Path>>(self, path: P) -> io::Result<File> {
+    OpenOptions::new()
+      .read(self.can_read())
+      .write(self.can_write())
+      .create(true).truncate(false)
+      .open(path)
+  }
+
+  /// Creates a new [`File`] with file options based on this [`FileMode`], failing if it already exists.
+  pub fn create_new<P: Into<PathBuf> + AsRef<Path>>(self, path: P) -> io::Result<File> {
+    OpenOptions::new()
+      .read(self.can_read())
+      .write(self.can_write())
+      .create_new(true)
+      .open(path)
   }
 
   /// Returns `true` if this [`FileMode`] is allowed to read, `false` otherwise.

@@ -91,6 +91,20 @@ impl StandardManagerOptions {
     Ok(file)
   }
 
+  /// Opens a new [`File`] with file options based on this [`StandardManagerOptions`], or create it if it does not exist.
+  pub fn create<P: AsRef<Path>>(&self, path: P) -> io::Result<File> {
+    let file = self.mode.create(path.as_ref())?;
+    self.lock.lock(&file)?;
+    Ok(file)
+  }
+
+  /// Creates a new [`File`] with file options based on this [`StandardManagerOptions`], failing if it already exists.
+  pub fn create_new<P: AsRef<Path>>(&self, path: P) -> io::Result<File> {
+    let file = self.mode.create_new(path.as_ref())?;
+    self.lock.lock(&file)?;
+    Ok(file)
+  }
+
   /// A [`StandardManagerOptions`] set to use [`FileLock::None`] and [`FileMode::Readonly`].
   pub const UNLOCKED_READONLY: Self = StandardManagerOptions::from_lock_and_mode(FileLock::None, FileMode::Readonly);
   /// A [`StandardManagerOptions`] set to use [`FileLock::None`] and [`FileMode::Writable`].
