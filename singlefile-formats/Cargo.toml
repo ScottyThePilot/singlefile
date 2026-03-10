@@ -1,6 +1,6 @@
 [package]
 name = "singlefile-formats"
-version = "0.4.0-rc1"
+version = "0.4.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 description = "Default file format implementations for singlefile."
 documentation = "https://docs.rs/singlefile-formats"
@@ -12,17 +12,17 @@ rust-version = "1.85"
 [dependencies]
 base64 = { version = "0.22.1", optional = true }
 bincode = { version = "=2.0.1", default-features = false, features = ["std"], optional = true }
-bzip2 = { version = "0.5.2", optional = true }
+bzip2 = { version = "0.6.1", optional = true }
 ciborium = { version = "0.2.2", optional = true }
-flate2 = { version = "1.1", optional = true }
+flate2 = { version = "1.1.9", optional = true }
 serde = { version = "1.0", optional = true }
 serde_json = { version = "1.0", optional = true }
-toml = { version = "0.8.21", optional = true }
+toml = { version = "1.0.6", optional = true }
 xz2 = { version = "0.1.7", optional = true }
 
 [dependencies.singlefile]
 path = "../singlefile"
-version = "0.4.0-rc1"
+version = "0.4.0"
 # don't use default features, because anyone depending on
 # `singlefile-formats` will then be forced to have them
 default-features = false
@@ -34,6 +34,7 @@ version = "2.0"
 default = ["compression"]
 compression = []
 utils-serde = ["dep:serde"]
+
 # data formats
 base64 = ["dep:base64"]
 bincode = ["dep:bincode"]
@@ -41,9 +42,9 @@ bincode-serde = ["bincode", "dep:serde", "bincode/serde"]
 cbor-serde = ["dep:ciborium", "dep:serde"]
 json-serde = ["dep:serde_json", "dep:serde"]
 toml-serde = ["dep:toml", "dep:serde"]
+
 # compression formats
 bzip = ["compression", "dep:bzip2"]
-bzip-rust = ["bzip", "bzip2/libbz2-rs-sys"]
 flate = ["compression", "dep:flate2"]
 xz = ["compression", "dep:xz2"]
 
