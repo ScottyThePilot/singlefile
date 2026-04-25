@@ -45,23 +45,40 @@ pub enum OrUserError<T, U> {
 
 impl<T, U> OrUserError<T, U> {
   /// Converts this error into another error.
-  /// The new error type `E` must implement [`From<Error<FE>>`][enum@Error].
-  /// Additionally takes a closure allowing the user to manually convert the user error.
-  pub fn convert_into<E, F>(self, f: F) -> E
+  /// The new error type `E` must implement [`From<T>`].
+  /// Additionally takes a closure allowing the user to decide how to convert the user error.
+  pub fn convert_with<E, F>(self, f: F) -> E
   where T: Into<E>, F: FnOnce(U) -> E {
     match self {
       Self::Base(err) => err.into(),
       Self::User(err) => f(err)
     }
   }
+
+  /// Converts this error into another error.
+  /// The new error type `E` must implement [`From<T>`] and [`From<U>`].
+  pub fn convert<E>(self) -> E
+  where T: Into<E>, U: Into<E> {
+    self.convert_with(U::into)
+  }
 }
 
 impl<T> OrUserError<T, Infallible> {
-  /// Converts this error to `T`, given that `U` is [`Infallible`].
+  /// Converts this error to `T` (the base error variant), given that `U` (the user error variant) is [`Infallible`].
   pub fn into_base(self) -> T {
     match self {
       Self::Base(err) => err,
       Self::User(i) => match i {}
+    }
+  }
+}
+
+impl<U> OrUserError<Infallible, U> {
+  /// Converts this error to `U` (the user error variant), given that `T` (the base error variant) is [`Infallible`].
+  pub fn into_user(self) -> U {
+    match self {
+      Self::User(err) => err,
+      Self::Base(i) => match i {}
     }
   }
 }
