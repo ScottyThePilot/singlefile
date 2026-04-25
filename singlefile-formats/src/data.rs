@@ -2,6 +2,7 @@
 
 pub mod base64;
 pub mod bincode;
+pub mod bincode_reloaded;
 pub mod cbor_serde;
 pub mod json_serde;
 pub mod toml_serde;
