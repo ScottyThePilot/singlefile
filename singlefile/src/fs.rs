@@ -65,9 +65,13 @@ macro_rules! import_fs {
 
 #[doc(no_inline)]
 pub use fs4::{
+  TryLockError,
   FsStats as Stats,
   statvfs as stats,
-  lock_contended_error
+  allocation_granularity,
+  available_space,
+  free_space,
+  total_space
 };
 
 import_fs4!(pub use {

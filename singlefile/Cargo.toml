@@ -7,11 +7,11 @@ documentation = "https://docs.rs/singlefile"
 repository = "https://github.com/ScottyThePilot/singlefile"
 license = "MIT OR Apache-2.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.88"
 
 [dependencies]
 dunce = { version = "1.0.5" }
-fs4 = { version = "0.13.1" }
+fs4 = { version = "1", features = ["sync"] }
 fs-err2 = { package = "fs-err", version = "2", optional = true }
 fs-err3 = { package = "fs-err", version = "3", optional = true }
 thiserror = { version = "2.0" }

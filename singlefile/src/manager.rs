@@ -209,12 +209,21 @@ pub enum FileLock {
 }
 
 impl FileLock {
-  /// Locks the file.
+  /// Attempts to lock the file, blocking until the lock can be acquired.
   pub fn lock(self, file: &File) -> io::Result<()> {
     match self {
       Self::None => Ok(()),
       Self::Shared => crate::fs::FileExt::lock_shared(file),
-      Self::Exclusive => crate::fs::FileExt::lock_exclusive(file)
+      Self::Exclusive => crate::fs::FileExt::lock(file)
+    }
+  }
+
+  /// Attempts to lock the file, without blocking.
+  pub fn try_lock(self, file: &File) -> Result<(), crate::fs::TryLockError> {
+    match self {
+      Self::None => Ok(()),
+      Self::Shared => crate::fs::FileExt::try_lock_shared(file),
+      Self::Exclusive => crate::fs::FileExt::try_lock(file)
     }
   }
 
