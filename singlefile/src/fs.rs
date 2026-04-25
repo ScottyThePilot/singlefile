@@ -40,7 +40,7 @@ macro_rules! import_fs4 {
         $vis use fs4::fs_err2::{$($name $(as $new_name)?),*};
       } else {
         #[doc(no_inline)]
-        $vis use fs4::fs_std::{$($name $(as $new_name)?),*};
+        $vis use fs4::{$($name $(as $new_name)?),*};
       }
     }
   );
