@@ -1,6 +1,6 @@
 [package]
 name = "singlefile-formats"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 description = "Default file format implementations for singlefile."
 documentation = "https://docs.rs/singlefile-formats"
@@ -23,7 +23,7 @@ xz2 = { version = "0.1.7", optional = true }
 
 [dependencies.singlefile]
 path = "../singlefile"
-version = "0.4.0"
+version = "0.5.0"
 # don't use default features, because anyone depending on
 # `singlefile-formats` will then be forced to have them
 default-features = false
