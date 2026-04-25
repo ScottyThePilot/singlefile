@@ -8,14 +8,24 @@
 //!
 //! Otherwise, all of these items will point to functions
 //! from the standard library.
+//!
+//! Since the contents of this module may change depending on what features are enabled
+//! for `singlefile` (which may be influenced by a dependency!) you should understand
+//! the differences between `std::fs` and the different versions of `fs-err` and
+//! consider whether importing from this module is appropriate.
+//!
+//! As such, the contents of this module are considered an implementation detail
+//! and may have breaking changes between versions.
+
+pub extern crate dunce;
 
 use std::path::{Path, PathBuf};
 
 cfg_if::cfg_if!{
   if #[cfg(feature = "fs-err3")] {
-    pub use fs_err3 as fs_err;
+    pub extern crate fs_err3 as fs_err;
   } else if #[cfg(feature = "fs-err2")] {
-    pub use fs_err2 as fs_err;
+    pub extern crate fs_err2 as fs_err;
   }
 }
 
