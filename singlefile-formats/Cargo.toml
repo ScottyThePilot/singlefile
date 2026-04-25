@@ -46,6 +46,12 @@ cbor-serde = ["dep:ciborium", "dep:serde"]
 json-serde = ["dep:serde_json", "dep:serde"]
 toml-serde = ["dep:toml", "dep:serde"]
 
+toml-preserve-order = ["toml?/preserve_order"]
+json-preserve-order = ["serde_json?/preserve_order"]
+json-float-roundtrip = ["serde_json?/float_roundtrip"]
+json-arbitrary-precision = ["serde_json?/arbitrary_precision"]
+json-raw-value = ["serde_json?/raw_value"]
+
 # compression formats
 bzip = ["compression", "dep:bzip2"]
 flate = ["compression", "dep:flate2"]
