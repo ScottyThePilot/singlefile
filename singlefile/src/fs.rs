@@ -110,6 +110,14 @@ import_fs!(pub use {
   write
 });
 
+cfg_if::cfg_if!{
+  if #[cfg(feature = "fs-err3")] {
+    pub use fs_err3::exists;
+  } else {
+    pub use std::fs::exists;
+  }
+}
+
 /// Takes a path, returning the most compatible form of a path instead of UNC when on Windows.
 #[inline]
 pub fn simplified_path(path: &Path) -> &Path {
