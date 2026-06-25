@@ -8,11 +8,11 @@
 //! - `bincode-serde`: Enables the [`BincodeSerde`] file format for use with [`serde`] types.
 //! - `cbor-serde`: Enables the [`Cbor`] file format for use with [`serde`] types.
 //! - `json-serde`: Enables the [`Json`] file format for use with [`serde`] types.
+//! - `ron-serde`: Enables the [`Ron`] file format for use with [`serde`] types.
 //! - `toml-serde`: Enables the [`Toml`] file format for use with [`serde`] types.
 //! - `bzip`: Enables the [`BZip2`] compression format. See [`CompressionFormat`] for more info.
 //! - `bzip-rust`: Enables the `libbz2-rs-sys` feature for `bzip2`.
-//! - `flate`: Enables the [`Deflate`], [`Gz`],
-//!   and [`ZLib`] compression formats. See [`CompressionFormat`] for more info.
+//! - `flate`: Enables the [`Deflate`], [`Gz`], and [`ZLib`] compression formats. See [`CompressionFormat`] for more info.
 //! - `xz`: Enables the [`Xz`] compression format. See [`CompressionFormat`] for more info.
 //!
 //! [`FileFormat`]: singlefile::FileFormat
@@ -20,6 +20,7 @@
 //! [`BincodeSerde`]: crate::data::bincode::BincodeSerde
 //! [`Cbor`]: crate::data::cbor_serde::Cbor
 //! [`Json`]: crate::data::json_serde::Json
+//! [`Ron`]: crate::data::ron_serde::Ron
 //! [`Toml`]: crate::data::toml_serde::Toml
 //! [`CompressionFormat`]: crate::compression::CompressionFormat
 //! [`BZip2`]: crate::compression::bzip::BZip2
