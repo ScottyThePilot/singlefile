@@ -1,6 +1,6 @@
 [package]
 name = "singlefile"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["ScottyThePilot <scotty.codes@gmail.com>"]
 description = "Dead simple file data manipulation."
 documentation = "https://docs.rs/singlefile"
