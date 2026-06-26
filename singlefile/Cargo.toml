@@ -37,7 +37,7 @@ features = ["atomic", "shared", "shared-async", "fs-err"]
 
 [dev-dependencies.singlefile-formats]
 path = "../singlefile-formats"
-features = ["cbor-serde", "json-serde", "toml-serde"]
+features = ["cbor-serde", "json-serde", "ron-serde", "toml-serde"]
 
 [dev-dependencies.tokio]
 version = "1"

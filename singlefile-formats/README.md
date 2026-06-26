@@ -10,6 +10,7 @@ By default, no features are enabled.
 
 - `cbor-serde`: Enables the `Cbor` file format for use with `serde` types.
 - `json-serde`: Enables the `Json` file format for use with `serde` types.
+- `ron-serde`: Enables the `Ron` file format for use with `serde` types.
 - `toml-serde`: Enables the `Toml` file format for use with `serde` types.
 - `bzip`: Enables the `BZip2` compression format.
 - `flate`: Enables the `Deflate`, `Gz`, and `ZLib` compression formats.

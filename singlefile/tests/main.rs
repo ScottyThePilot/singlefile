@@ -65,6 +65,8 @@ macro_rules! test_group {
 test_group!(tests_cbor, singlefile_formats::data::cbor_serde::Cbor, "cbor");
 test_group!(tests_json, singlefile_formats::data::json_serde::Json::<true>, "json");
 test_group!(tests_toml, singlefile_formats::data::toml_serde::Toml::<true>, "toml");
+test_group!(tests_ron, singlefile_formats::data::ron_serde::Ron::default(), "ron");
+test_group!(tests_ron_pretty, singlefile_formats::data::ron_serde::RonPretty::default(), "ron");
 
 #[derive(Debug, Clone)]
 struct Tester {
