@@ -1,4 +1,4 @@
-//! Container constructs allowing multiple-ownership, asynchronous, managed access to a file.
+//! Container constructs providing multiple-ownership, asynchronous, managed access to a file.
 //!
 //! This module can be enabled with the `shared-async` cargo feature.
 
@@ -184,28 +184,6 @@ where
     spawn_blocking!(Container::<T, _>::create_or_default(path, format, options)).map(From::from)
   }
 
-  /// Grants the caller immutable access to the underlying value `T`,
-  /// but only for the duration of the provided function or closure.
-  /// The contents of `operation` will be treated as if they will block,
-  /// and will be called through [`tokio::task::spawn_blocking`].
-  #[deprecated = "use `ContainerSharedAsync::operate` instead"]
-  pub async fn operate_nonblocking<F, R>(&self, operation: F) -> R
-  where F: FnOnce(&T) -> R + Send + 'static, R: Send + 'static {
-    let guard = self.access_owned().await;
-    spawn_blocking!(operation(&guard))
-  }
-
-  /// Grants the caller mutable access to the underlying value `T`,
-  /// but only for the duration of the provided function or closure.
-  /// The contents of `operation` will be treated as if they will block,
-  /// and will be called through [`tokio::task::spawn_blocking`].
-  #[deprecated = "use `ContainerSharedAsync::operate_mut` instead"]
-  pub async fn operate_mut_nonblocking<F, R>(&self, operation: F) -> R
-  where F: FnOnce(&mut T) -> R + Send + 'static, R: Send + 'static {
-    let mut guard = self.access_owned_mut().await;
-    spawn_blocking!(operation(&mut guard))
-  }
-
   /// Reads a value from the managed file, replacing the current state in memory,
   /// immediately granting the caller immutable access to that state
   /// for the duration of the provided function or closure.
@@ -266,6 +244,7 @@ where
   }
 
   /// Writes the given state to the managed file, replacing the in-memory state.
+  #[doc(alias = "replace")]
   pub async fn overwrite(&self, value: T) -> Result<(), Manager::Error> {
     let mut guard = self.access_owned_mut().await;
     spawn_blocking!(guard.container_mut().overwrite(value))

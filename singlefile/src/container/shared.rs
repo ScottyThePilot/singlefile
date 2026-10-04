@@ -1,4 +1,4 @@
-//! Container constructs allowing multiple-ownership managed access to a file.
+//! Container constructs providing multiple-ownership managed access to a file.
 //!
 //! This module can be enabled with the `shared` cargo feature.
 
