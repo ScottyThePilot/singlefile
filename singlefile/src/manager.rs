@@ -28,7 +28,7 @@ pub trait FileManager<T>: Sized {
   type Options;
 
   /// The error type returned by methods of this [`FileManager`].
-  type Error: std::error::Error + From<Error<<Self::Format as FileFormat<T>>::FormatError>>;
+  type Error: From<Error<<Self::Format as FileFormat<T>>::FormatError>>;
 
   /// Open a new instance of this [`FileManager`], returning an error if the file at the given path does not exist.
   fn open<P: AsRef<Path>>(

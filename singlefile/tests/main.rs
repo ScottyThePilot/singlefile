@@ -10,7 +10,7 @@ use singlefile::container_shared_async::ContainerSharedAsync;
 use singlefile::manager::FileManager;
 use singlefile::manager::atomic::AtomicFileSupport;
 
-use std::{fs, io, mem};
+use std::{fmt, fs, io, mem};
 use std::convert::Infallible;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -135,7 +135,7 @@ impl Tester {
   fn test_container<M, F>(&self, format: F, options: M::Options)
   where
     M: FileManager<Data, Format = F>,
-    M::Error: Send + Sync + 'static,
+    M::Error: fmt::Debug + Send + Sync + 'static,
     F: FileFormat<Data>
   {
     let path = self.data_path();
@@ -171,7 +171,7 @@ impl Tester {
   fn test_container_shared<M, F>(&self, format: F, options: M::Options)
   where
     M: FileManager<Data, Format = F> + Send + Sync + 'static,
-    M::Error: Send + Sync + 'static,
+    M::Error: fmt::Debug + Send + Sync + 'static,
     F: FileFormat<Data> + Send + Sync + 'static
   {
     let path = self.data_path();
@@ -235,7 +235,7 @@ impl Tester {
   async fn test_container_shared_async<M, F>(&self, format: F, options: M::Options)
   where
     M: FileManager<Data, Format = F> + Send + Sync + 'static,
-    M::Options: Send, M::Error: Send + Sync + 'static,
+    M::Options: Send, M::Error: fmt::Debug + Send + Sync + 'static,
     F: FileFormat<Data> + Send + Sync + 'static,
     F::FormatError: Send
   {
