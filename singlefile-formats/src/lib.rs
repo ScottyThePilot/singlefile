@@ -1,7 +1,7 @@
 //! This library provides a number of default [`FileFormat`] implementations
 //! for use within [`singlefile`](https://crates.io/crates/singlefile).
 //!
-//! # Features
+//! ## Features
 //! By default, no features are enabled.
 //!
 //! - `bincode`: Enables the [`Bincode`] file format.
