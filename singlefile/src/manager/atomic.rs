@@ -1,4 +1,8 @@
 //! An implementation of [`FileManager`] capable of atomic writes, which may mitigate file corruption.
+//!
+//! ## Why does this require `fs-err`?
+//! In order for the atomic manager to swap files, it needs to know their paths, and the `File` object from [`std`]
+//! does not store its own path. The `File` objects from `fs-err`, however do, so this module requires it.
 
 use crate::error::Error;
 use crate::format::FileFormat;
