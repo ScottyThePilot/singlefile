@@ -2,7 +2,7 @@
 extern crate serde;
 extern crate singlefile;
 
-use singlefile::container::StandardContainer;
+use singlefile::container::owned::StandardContainer;
 
 // You can implement a file format however you want,
 // since `singlefile` is serialization-framework agnostic.

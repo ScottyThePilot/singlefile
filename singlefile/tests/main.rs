@@ -4,9 +4,9 @@ extern crate singlefile_formats;
 
 use serde::{Serialize, Deserialize};
 use singlefile::FileFormat;
-use singlefile::container::Container;
-use singlefile::container_shared::ContainerShared;
-use singlefile::container_shared_async::ContainerSharedAsync;
+use singlefile::container::owned::Container;
+use singlefile::container::shared::ContainerShared;
+use singlefile::container::shared_async::ContainerSharedAsync;
 use singlefile::manager::FileManager;
 use singlefile::manager::atomic::AtomicFileSupport;
 

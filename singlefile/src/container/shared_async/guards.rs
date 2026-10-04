@@ -1,4 +1,4 @@
-use crate::container::Container;
+use crate::container::owned::Container;
 
 use std::fmt;
 use std::ops::{Deref, DerefMut};
@@ -16,8 +16,8 @@ use tokio::sync::{
 ///
 /// This structure is created by the [`access`] method on [`ContainerSharedAsync`].
 ///
-/// [`ContainerSharedAsync`]: crate::container_shared_async::ContainerSharedAsync
-/// [`access`]: crate::container_shared_async::ContainerSharedAsync::access
+/// [`ContainerSharedAsync`]: crate::container::shared_async::ContainerSharedAsync
+/// [`access`]: crate::container::shared_async::ContainerSharedAsync::access
 #[must_use = "if unused the lock will immediately unlock"]
 #[derive(Debug)]
 pub struct AccessGuard<'a, T, Manager> {
@@ -65,8 +65,8 @@ impl<'a, T: fmt::Display, Manager> fmt::Display for AccessGuard<'a, T, Manager> 
 ///
 /// This structure is created by the [`access_mut`] method on [`ContainerSharedAsync`].
 ///
-/// [`ContainerSharedAsync`]: crate::container_shared_async::ContainerSharedAsync
-/// [`access_mut`]: crate::container_shared_async::ContainerSharedAsync::access_mut
+/// [`ContainerSharedAsync`]: crate::container::shared_async::ContainerSharedAsync
+/// [`access_mut`]: crate::container::shared_async::ContainerSharedAsync::access_mut
 #[must_use = "if unused the lock will immediately unlock"]
 #[derive(Debug)]
 pub struct AccessGuardMut<'a, T, Manager> {
@@ -139,8 +139,8 @@ impl<'a, T: fmt::Display, Manager> fmt::Display for AccessGuardMut<'a, T, Manage
 ///
 /// This structure is created by the [`access_owned`] method on [`ContainerSharedAsync`].
 ///
-/// [`ContainerSharedAsync`]: crate::container_shared_async::ContainerSharedAsync
-/// [`access_owned`]: crate::container_shared_async::ContainerSharedAsync::access_owned
+/// [`ContainerSharedAsync`]: crate::container::shared_async::ContainerSharedAsync
+/// [`access_owned`]: crate::container::shared_async::ContainerSharedAsync::access_owned
 #[must_use = "if unused the lock will immediately unlock"]
 #[derive(Debug)]
 pub struct OwnedAccessGuard<T, Manager> {
@@ -188,8 +188,8 @@ impl<T: fmt::Display, Manager> fmt::Display for OwnedAccessGuard<T, Manager> {
 ///
 /// This structure is created by the [`access_owned_mut`] method on [`ContainerSharedAsync`].
 ///
-/// [`ContainerSharedAsync`]: crate::container_shared_async::ContainerSharedAsync
-/// [`access_owned_mut`]: crate::container_shared_async::ContainerSharedAsync::access_owned_mut
+/// [`ContainerSharedAsync`]: crate::container::shared_async::ContainerSharedAsync
+/// [`access_owned_mut`]: crate::container::shared_async::ContainerSharedAsync::access_owned_mut
 #[must_use = "if unused the lock will immediately unlock"]
 #[derive(Debug)]
 pub struct OwnedAccessGuardMut<T, Manager> {

@@ -7,7 +7,7 @@
 //! ```no_run
 //! # use singlefile_formats::data::json_serde::{Json, JsonError};
 //! // A readable, writable container
-//! use singlefile::container::{StandardContainer, StandardContainerOptions};
+//! use singlefile::container::owned::{StandardContainer, StandardContainerOptions};
 //! use serde::{Serialize, Deserialize};
 //!
 //! #[derive(Serialize, Deserialize, Default)]
@@ -48,7 +48,7 @@
 //! # #[cfg(feature = "shared")] {
 //! # use std::convert::Infallible;
 //! // A readable, writable container with multiple-ownership
-//! use singlefile::container_shared::{StandardContainerShared, StandardContainerSharedOptions};
+//! use singlefile::container::shared::{StandardContainerShared, StandardContainerSharedOptions};
 //! use serde::{Serialize, Deserialize};
 //!
 //! #[derive(Serialize, Deserialize, Default)]
@@ -115,9 +115,9 @@
 //! - `deadlock-detection`: Enables `parking_lot`'s `deadlock_detection` feature, if it is present.
 //! - `tokio-parking-lot`: Enables `parking_lot` for use in `tokio`, if it is present. Enabled by default.
 //!
-//! [`Container`]: crate::container::Container
-//! [`ContainerShared`]: crate::container_shared::ContainerShared
-//! [`ContainerSharedAsync`]: crate::container_shared_async::ContainerSharedAsync
+//! [`Container`]: crate::container::owned::Container
+//! [`ContainerShared`]: crate::container::shared::ContainerShared
+//! [`ContainerSharedAsync`]: crate::container::shared_async::ContainerSharedAsync
 //! [`FileFormat`]: crate::format::FileFormat
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -142,12 +142,6 @@ extern crate parking_lot;
 extern crate tokio;
 
 pub mod container;
-#[cfg_attr(docsrs, doc(cfg(feature = "shared")))]
-#[cfg(feature = "shared")]
-pub mod container_shared;
-#[cfg_attr(docsrs, doc(cfg(feature = "shared-async")))]
-#[cfg(feature = "shared-async")]
-pub mod container_shared_async;
 pub mod error;
 pub mod format;
 pub mod fs;

@@ -10,7 +10,7 @@ This library is designed to be a dead-simple way of reading and writing your rus
 
 ```rust
 // A readable, writable container
-use singlefile::container::{StandardContainer, StandardContainerOptions};
+use singlefile::container::owned::{StandardContainer, StandardContainerOptions};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -46,7 +46,7 @@ The async container types can be enabled with the `shared-async` cargo feature.
 
 ```rust
 // A readable, writable container with multiple-ownership
-use singlefile::container_shared::{StandardContainerShared, StandardContainerSharedOptions};
+use singlefile::container::shared::{StandardContainerShared, StandardContainerSharedOptions};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Default)]

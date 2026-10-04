@@ -16,7 +16,7 @@ Crate name           | Crates.io page                         | Docs.rs page
 // A JSON file format, utilizing serde
 use singlefile_formats::json_serde::Json;
 // A readable, writable container
-use singlefile::container::StandardContainer;
+use singlefile::container::owned::StandardContainer;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Default)]
