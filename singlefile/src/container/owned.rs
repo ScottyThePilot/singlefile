@@ -22,8 +22,8 @@ pub type AtomicContainerOptions<Support> = crate::manager::atomic::AtomicManager
 /// A basic owned container allowing managed access to some underlying file.
 #[derive(Debug)]
 pub struct Container<T, Manager> {
-  pub(crate) value: T,
-  pub(crate) manager: Manager
+  value: T,
+  manager: Manager
 }
 
 impl<T, Manager> Container<T, Manager> {
