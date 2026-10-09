@@ -40,9 +40,3 @@ where T: Serialize + DeserializeOwned {
     ciborium::ser::into_writer(value, writer).map_err(From::from)
   }
 }
-
-/// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`Cbor`].
-/// Provides a single parameter for compression format.
-#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
-#[cfg(feature = "compression")]
-pub type CompressedCbor<C> = crate::compression::Compressed<C, Cbor>;

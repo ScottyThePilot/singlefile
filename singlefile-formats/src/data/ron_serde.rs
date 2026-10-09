@@ -121,21 +121,3 @@ impl RonPretty {
     RonPretty { options, config }
   }
 }
-
-/// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`Ron`].
-///
-/// This will not pretty-print code when serializing.
-///
-/// Provides a single parameter for compression format.
-#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
-#[cfg(feature = "compression")]
-pub type CompressedRon<C> = crate::compression::Compressed<C, Ron>;
-
-/// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`Ron`].
-///
-/// This will pretty-print code when serializing, so consider using [`CompressedRon`] instead.
-///
-/// Provides a single parameter for compression format.
-#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
-#[cfg(feature = "compression")]
-pub type CompressedRonPretty<C> = crate::compression::Compressed<C, RonPretty>;

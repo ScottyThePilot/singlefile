@@ -15,7 +15,7 @@ use std::io::{Read, Write};
 /// Combines a [`FileFormat`] and a [`CompressionFormat`], making the contents emitted by
 /// the format compressed before writing to disk, and decompressed before parsing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Compressed<C, F> {
+pub struct Compressed<F, C> {
   /// The [`FileFormat`] to be used.
   pub format: F,
   /// The [`CompressionFormat`] to be used.
@@ -25,7 +25,7 @@ pub struct Compressed<C, F> {
   pub level: u32
 }
 
-impl<C, F> Compressed<C, F> {
+impl<F, C> Compressed<F, C> {
   /// Create a new [`Compressed`], given a compression level.
   #[inline]
   pub const fn with_level(format: F, compression: C, level: u32) -> Self {
@@ -33,7 +33,7 @@ impl<C, F> Compressed<C, F> {
   }
 }
 
-impl<C, F> Compressed<C, F> where C: CompressionFormatLevels {
+impl<F, C> Compressed<F, C> where C: CompressionFormatLevels {
   /// Creates a new [`Compressed`] with the default compression level.
   #[inline]
   pub const fn new(format: F, compression: C) -> Self {
@@ -53,7 +53,7 @@ impl<C, F> Compressed<C, F> where C: CompressionFormatLevels {
   }
 }
 
-impl<C, F> Default for Compressed<C, F>
+impl<F, C> Default for Compressed<F, C>
 where C: Default + CompressionFormatLevels, F: Default {
   #[inline]
   fn default() -> Self {
@@ -61,7 +61,7 @@ where C: Default + CompressionFormatLevels, F: Default {
   }
 }
 
-impl<T, C, F> FileFormat<T> for Compressed<C, F>
+impl<T, F, C> FileFormat<T> for Compressed<F, C>
 where C: CompressionFormat, F: FileFormat<T> {
   type FormatError = F::FormatError;
 

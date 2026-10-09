@@ -62,9 +62,3 @@ where T: Serialize + DeserializeOwned {
 pub type PrettyJson = Json<true>;
 /// A shortcut type to a [`Json`] with pretty-print disabled.
 pub type RegularJson = Json<false>;
-
-/// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`Json`].
-/// Provides parameters for compression format and pretty-print configuration (defaulting to off).
-#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
-#[cfg(feature = "compression")]
-pub type CompressedJson<C, const PRETTY: bool = false> = crate::compression::Compressed<C, Json<PRETTY>>;

@@ -85,9 +85,3 @@ where T: Serialize + DeserializeOwned {
 pub type PrettyToml = Toml<true>;
 /// A shortcut type to a [`Toml`] with pretty-print disabled.
 pub type RegularToml = Toml<false>;
-
-/// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`Toml`].
-/// Provides parameters for compression format and pretty-print configuration (defaulting to off).
-#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
-#[cfg(feature = "compression")]
-pub type CompressedToml<C, const PRETTY: bool = false> = crate::compression::Compressed<C, Toml<PRETTY>>;

@@ -141,10 +141,3 @@ impl<O: Options + Clone> Bincode<O> {
     Bincode { options: self.options.allow_trailing_bytes() }
   }
 }
-
-/// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`Bincode`].
-/// Provides parameters for compression format and Bincode options.
-#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
-#[cfg(feature = "compression")]
-pub type CompressedBincode<C, O = DefaultOptions>
-  = crate::compression::Compressed<C, Bincode<O>>;
