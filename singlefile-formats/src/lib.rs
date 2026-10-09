@@ -2,8 +2,10 @@
 //! for use within [`singlefile`](https://crates.io/crates/singlefile).
 //!
 //! ## Features
-//! By default, no features are enabled.
+//! By default, only the `compression` feature is enabled.
 //!
+//! - `compression`: Enables the [`compression`] module. Enabled by default.
+//! - `utils-serde`: Enables the [`utils_serde`] module.
 //! - `base64`: Enables the [`Base64`][crate::data::base64::Base64] file format.
 //! - `bincode1`: Enables the [`Bincode`][crate::data::bincode1::Bincode] file format.
 //! - `bincode2`: Enables the [`Bincode`][crate::data::bincode2::Bincode] file format.
@@ -15,7 +17,6 @@
 //! - `ron-serde`: Enables the [`Ron`][crate::data::ron_serde::Ron] file format for use with [`serde`] types.
 //! - `toml-serde`: Enables the [`Toml`][crate::data::toml_serde::Toml] file format for use with [`serde`] types.
 //! - `bzip`: Enables the [`BZip2`][crate::compression::bzip::BZip2] compression format. See [`CompressionFormat`] for more info.
-//! - `bzip-rust`: Enables the `libbz2-rs-sys` feature for `bzip2`.
 //! - `flate`: Enables the [`Deflate`][crate::compression::flate::Deflate], [`Gz`][crate::compression::flate::Gz], and
 //!   [`ZLib`][crate::compression::flate::ZLib] compression formats. See [`CompressionFormat`] for more info.
 //! - `xz`: Enables the [`Xz`][crate::compression::xz::Xz] compression format. See [`CompressionFormat`] for more info.
