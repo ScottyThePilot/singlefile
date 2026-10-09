@@ -16,6 +16,9 @@ use std::path::{Path, PathBuf};
 
 /// An implementation of [`FileManager`]. Provides options for file locking and atomic file writes.
 ///
+/// This manager creates a new file for every write, so a file should never be left in an unrecoverable state
+/// should the [`FileFormat`] ever encounter an error, the host machine loses power, etc.
+///
 /// To use a [`AtomicManager`], you will need to provide a type implementing [`AtomicFileSupport`]
 /// in the [`AtomicManagerOptions`]. [`AtomicFileSupport`] determines the scheme for where
 /// temporary files will be placed and what they will be named.
