@@ -151,4 +151,4 @@ pub mod utils;
 pub use crate::error::{Error, OrUserError};
 
 #[doc(inline)]
-pub use crate::format::{FileFormat, FileFormatUtf8};
+pub use crate::format::{FileFormat, FileFormatText};

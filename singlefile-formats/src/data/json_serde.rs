@@ -7,7 +7,7 @@ pub extern crate serde_json as original;
 
 use serde::ser::Serialize;
 use serde::de::DeserializeOwned;
-use singlefile::{FileFormat, FileFormatUtf8};
+use singlefile::{FileFormat, FileFormatText};
 
 use std::io::{Read, Write};
 
@@ -44,7 +44,7 @@ where T: Serialize + DeserializeOwned {
   }
 }
 
-impl<T, const PRETTY: bool> FileFormatUtf8<T> for Json<PRETTY>
+impl<T, const PRETTY: bool> FileFormatText<T> for Json<PRETTY>
 where T: Serialize + DeserializeOwned {
   fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError> {
     serde_json::from_str(buf)

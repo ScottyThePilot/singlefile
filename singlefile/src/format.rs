@@ -3,7 +3,7 @@
 pub mod default_formats;
 
 pub use self::default_formats::PlainBytes;
-pub use self::default_formats::PlainUtf8;
+pub use self::default_formats::PlainText;
 
 use std::io::{Cursor, BufReader, BufWriter, Read, Write};
 
@@ -85,7 +85,7 @@ pub trait FileFormat<T> {
 
 /// A trait that indicates a file's contents will always be valid UTF-8.
 #[allow(clippy::wrong_self_convention)]
-pub trait FileFormatUtf8<T>: FileFormat<T> {
+pub trait FileFormatText<T>: FileFormat<T> {
   /// Deserialize a buffer from a string slice.
   fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError>;
 
@@ -129,7 +129,7 @@ macro_rules! impl_file_format_delegate_methods {
   );
 }
 
-macro_rules! impl_file_format_utf8_delegate_methods {
+macro_rules! impl_file_format_text_delegate_methods {
   ($Format:ident, $T:ident) => (
     fn from_string_buffer(&self, buf: &str) -> Result<$T, Self::FormatError> {
       $Format::from_string_buffer(self, buf)
@@ -147,8 +147,8 @@ macro_rules! impl_file_format_delegate {
       impl_file_format_delegate_methods!($Format, T);
     }
 
-    impl<T, $Format: FileFormatUtf8<T>> FileFormatUtf8<T> for $Type {
-      impl_file_format_utf8_delegate_methods!($Format, T);
+    impl<T, $Format: FileFormatText<T>> FileFormatText<T> for $Type {
+      impl_file_format_text_delegate_methods!($Format, T);
     }
   );
 }
@@ -163,14 +163,14 @@ impl<T, F: FnOnce() -> Format, Format: FileFormat<T>> FileFormat<T> for std::cel
   impl_file_format_delegate_methods!(Format, T);
 }
 
-impl<T, F: FnOnce() -> Format, Format: FileFormatUtf8<T>> FileFormatUtf8<T> for std::cell::LazyCell<Format, F> {
-  impl_file_format_utf8_delegate_methods!(Format, T);
+impl<T, F: FnOnce() -> Format, Format: FileFormatText<T>> FileFormatText<T> for std::cell::LazyCell<Format, F> {
+  impl_file_format_text_delegate_methods!(Format, T);
 }
 
 impl<T, F: FnOnce() -> Format, Format: FileFormat<T>> FileFormat<T> for std::sync::LazyLock<Format, F> {
   impl_file_format_delegate_methods!(Format, T);
 }
 
-impl<T, F: FnOnce() -> Format, Format: FileFormatUtf8<T>> FileFormatUtf8<T> for std::sync::LazyLock<Format, F> {
-  impl_file_format_utf8_delegate_methods!(Format, T);
+impl<T, F: FnOnce() -> Format, Format: FileFormatText<T>> FileFormatText<T> for std::sync::LazyLock<Format, F> {
+  impl_file_format_text_delegate_methods!(Format, T);
 }

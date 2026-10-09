@@ -1,6 +1,6 @@
 //! Basic formats for treating files as plain bytes or UTF-8 text.
 
-use super::{FileFormat, FileFormatUtf8};
+use super::{FileFormat, FileFormatText};
 
 use std::hash::Hash;
 use std::io::{self, Read, Write};
@@ -43,9 +43,9 @@ impl<T> FileFormat<T> for PlainBytes where T: AsRef<[u8]>, Vec<u8>: Into<T> {
 /// A [`FileFormat`] that treats files as plain UTF-8 text.
 /// This file format is only usable with types like `String` or `Box<str>`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct PlainUtf8;
+pub struct PlainText;
 
-impl<T> FileFormat<T> for PlainUtf8 where T: AsRef<str>, String: Into<T> {
+impl<T> FileFormat<T> for PlainText where T: AsRef<str>, String: Into<T> {
   type FormatError = io::Error;
 
   #[inline]
@@ -73,7 +73,7 @@ impl<T> FileFormat<T> for PlainUtf8 where T: AsRef<str>, String: Into<T> {
   }
 }
 
-impl<T> FileFormatUtf8<T> for PlainUtf8 where T: AsRef<str>, String: Into<T> {
+impl<T> FileFormatText<T> for PlainText where T: AsRef<str>, String: Into<T> {
   fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError> {
     Ok(buf.to_owned().into())
   }

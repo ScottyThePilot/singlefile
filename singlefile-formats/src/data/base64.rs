@@ -9,7 +9,7 @@ use base64::engine::Engine;
 use base64::engine::general_purpose::*;
 use base64::read::DecoderReader;
 use base64::write::{EncoderWriter, EncoderStringWriter};
-use singlefile::{FileFormat, FileFormatUtf8};
+use singlefile::{FileFormat, FileFormatText};
 
 use std::io::{Read, Write};
 
@@ -71,7 +71,7 @@ where F: FileFormat<T>, E: Engine {
   }
 }
 
-impl<F, E, T> FileFormatUtf8<T> for Base64<F, E>
+impl<F, E, T> FileFormatText<T> for Base64<F, E>
 where F: FileFormat<T>, E: Engine {
   fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError> {
     self.from_buffer(buf.as_bytes())

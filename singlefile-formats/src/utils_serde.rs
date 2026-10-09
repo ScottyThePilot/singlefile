@@ -3,7 +3,7 @@
 
 //! Utilities for use with [`serde`].
 
-use singlefile::{FileFormat, FileFormatUtf8};
+use singlefile::{FileFormat, FileFormatText};
 use serde::de::{Deserialize, Deserializer};
 use serde::ser::{Serialize, Serializer};
 
@@ -48,13 +48,13 @@ pub trait FormatAdapter<T> {
 ///
 /// Types will be converted to/from a `String` and serialized/deserialized that way.
 pub trait FormatAdapterText<T> {
-  /// The type of the [`FileFormatUtf8`].
-  type Format: FileFormatUtf8<T>;
+  /// The type of the [`FileFormatText`].
+  type Format: FileFormatText<T>;
 
-  /// The [`FileFormatUtf8`] that will be used for serializing and deserializing values.
+  /// The [`FileFormatText`] that will be used for serializing and deserializing values.
   const FORMAT: Self::Format;
 
-  /// Serializes the given value using the adapter's designated [`FileFormatUtf8`].
+  /// Serializes the given value using the adapter's designated [`FileFormatText`].
   ///
   /// This function may be used in `serde_derive`'s `#[serde(serialize_with = "...")]` attribute.
   fn serialize<S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
@@ -64,7 +64,7 @@ pub trait FormatAdapterText<T> {
       .and_then(|buf| buf.serialize(serializer))
   }
 
-  /// Deserializes a value using the adapter's designated [`FileFormatUtf8`].
+  /// Deserializes a value using the adapter's designated [`FileFormatText`].
   ///
   /// This function may be used in `serde_derive`'s `#[serde(deserialize_with = "...")]` attribute.
   fn deserialize<'de, D>(deserializer: D) -> Result<T, D::Error>

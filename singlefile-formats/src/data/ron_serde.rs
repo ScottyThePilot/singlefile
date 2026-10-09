@@ -9,7 +9,7 @@ use ron::options::Options;
 use ron::ser::PrettyConfig;
 use serde::ser::Serialize;
 use serde::de::DeserializeOwned;
-use singlefile::{FileFormat, FileFormatUtf8};
+use singlefile::{FileFormat, FileFormatText};
 
 use std::io::{Read, Write};
 
@@ -47,7 +47,7 @@ where T: Serialize + DeserializeOwned {
   }
 }
 
-impl<T> FileFormatUtf8<T> for Ron
+impl<T> FileFormatText<T> for Ron
 where T: Serialize + DeserializeOwned {
   fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError> {
     self.options.from_str(buf).map_err(Into::into)
@@ -104,7 +104,7 @@ where T: Serialize + DeserializeOwned {
   }
 }
 
-impl<T> FileFormatUtf8<T> for RonPretty
+impl<T> FileFormatText<T> for RonPretty
 where T: Serialize + DeserializeOwned {
   fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError> {
     self.options.from_str(buf).map_err(Into::into)
