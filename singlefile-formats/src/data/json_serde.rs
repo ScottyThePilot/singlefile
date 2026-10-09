@@ -17,7 +17,7 @@ pub type JsonError = serde_json::Error;
 /// A [`FileFormat`] corresponding to the JSON data format.
 /// Implemented using the [`serde_json`] crate, only compatible with [`serde`] types.
 ///
-/// This type provides an optional constant generic parameter for configuring pretty-print.
+/// Provides an optional constant parameter for configuring pretty-print.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Json<const PRETTY: bool = true>;
 

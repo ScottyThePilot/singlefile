@@ -29,8 +29,10 @@ pub enum BincodeError {
 }
 
 /// A [`FileFormat`] corresponding to the CBOR binary data format.
-/// Implemented using the [`ciborium`] crate, only compatible with types that implement
+/// Implemented using the [`bincode_reloaded`] crate, only compatible with types that implement
 /// [`Decode`] and [`Encode`].
+///
+/// Provides optional parameters for Bincode configuration.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Bincode<E = LittleEndian, I = Varint, L = NoLimit> {
   /// The internal [`Configuration`].
@@ -120,8 +122,10 @@ impl<E, I, L> Bincode<E, I, L> {
 }
 
 /// A [`FileFormat`] corresponding to the CBOR binary data format.
-/// Implemented using the [`ciborium`] crate, only compatible with types that implement
+/// Implemented using the [`bincode_reloaded`] crate, only compatible with types that implement
 /// [`Decode`] and [`Encode`].
+///
+/// Provides optional parameters for Bincode configuration.
 #[cfg(feature = "bincode-reloaded-serde")]
 #[derive(Debug, Clone, Copy, Default)]
 pub struct BincodeSerde<E = LittleEndian, I = Varint, L = NoLimit> {
@@ -214,14 +218,14 @@ impl<E, I, L> BincodeSerde<E, I, L> {
 }
 
 /// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`Bincode`].
-/// Provides a single parameter for compression format.
+/// Provides parameters for compression format and Bincode config.
 #[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
 #[cfg(feature = "compression")]
 pub type CompressedBincode<C, E = LittleEndian, I = Varint, L = NoLimit>
   = crate::compression::Compressed<C, Bincode<E, I, L>>;
 
 /// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`BincodeSerde`].
-/// Provides a single parameter for compression format.
+/// Provides parameters for compression format and Bincode config.
 #[cfg_attr(docsrs, doc(cfg(all(feature = "compression", feature = "bincode-reloaded-serde"))))]
 #[cfg(all(feature = "compression", feature = "bincode-reloaded-serde"))]
 pub type CompressedBincodeSerde<C, E = LittleEndian, I = Varint, L = NoLimit>

@@ -27,6 +27,8 @@ pub type BincodeError = bincode1::Error;
 
 /// A [`FileFormat`] corresponding to the CBOR binary data format.
 /// Implemented using the [`bincode`][bincode2] crate, only compatible with [`serde`] types.
+///
+/// Provides an optional parameter for Bincode options.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Bincode<O: Options + Clone = DefaultOptions> {
   /// The internal [`Options`].
@@ -141,7 +143,7 @@ impl<O: Options + Clone> Bincode<O> {
 }
 
 /// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`Bincode`].
-/// Provides a single parameter for compression format.
+/// Provides parameters for compression format and Bincode options.
 #[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
 #[cfg(feature = "compression")]
 pub type CompressedBincode<C, O = DefaultOptions>

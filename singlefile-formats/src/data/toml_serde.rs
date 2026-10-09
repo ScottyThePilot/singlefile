@@ -29,7 +29,7 @@ pub enum TomlError {
 /// A [`FileFormat`] corresponding to the TOML data format.
 /// Implemented using the [`toml`] crate, only compatible with [`serde`] types.
 ///
-/// This type provides an optional constant generic parameter for configuring pretty-print.
+/// Provides an optional constant parameter for configuring pretty-print.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Toml<const PRETTY: bool = true>;
 
