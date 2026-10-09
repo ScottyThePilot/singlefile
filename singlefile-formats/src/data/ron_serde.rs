@@ -58,6 +58,19 @@ where T: Serialize + DeserializeOwned {
   }
 }
 
+impl Ron {
+  /// Creates a new [`Ron`] given an [`Options`].
+  pub const fn new(options: Options) -> Self {
+    Ron { options }
+  }
+
+  /// Convert this [`Ron`] into a [`RonPretty`] by giving it a [`PrettyConfig`].
+  pub const fn into_pretty(self, config: PrettyConfig) -> RonPretty {
+    let Ron { options } = self;
+    RonPretty { options, config }
+  }
+}
+
 /// A [`FileFormat`] corresponding to the JSON data format.
 /// Implemented using the [`ron`] crate, only compatible with [`serde`] types.
 ///
@@ -99,6 +112,13 @@ where T: Serialize + DeserializeOwned {
 
   fn to_string_buffer(&self, value: &T) -> Result<String, Self::FormatError> {
     self.options.to_string_pretty(value, self.config.clone())
+  }
+}
+
+impl RonPretty {
+  /// Creates a new [`RonPretty`] given an [`Options`] and a [`PrettyConfig`].
+  pub const fn new(options: Options, config: PrettyConfig) -> Self {
+    RonPretty { options, config }
   }
 }
 
