@@ -93,55 +93,84 @@ pub trait FileFormatUtf8<T>: FileFormat<T> {
   fn to_string_buffer(&self, value: &T) -> Result<String, Self::FormatError>;
 }
 
+macro_rules! impl_file_format_delegate_methods {
+  ($Format:ident, $T:ident) => (
+    type FormatError = <$Format as FileFormat<$T>>::FormatError;
+
+    #[inline]
+    fn from_reader_buffered<R: Read>(&self, reader: R) -> Result<$T, Self::FormatError> {
+      $Format::from_reader_buffered(self, reader)
+    }
+
+    #[inline]
+    fn from_reader<R: Read>(&self, reader: R) -> Result<$T, Self::FormatError> {
+      $Format::from_reader(self, reader)
+    }
+
+    #[inline]
+    fn from_buffer(&self, buf: &[u8]) -> Result<$T, Self::FormatError> {
+      $Format::from_buffer(self, buf)
+    }
+
+    #[inline]
+    fn to_writer<W: Write>(&self, writer: W, value: &$T) -> Result<(), Self::FormatError> {
+      $Format::to_writer(self, writer, value)
+    }
+
+    #[inline]
+    fn to_writer_buffered<W: Write>(&self, writer: W, value: &$T) -> Result<(), Self::FormatError> {
+      $Format::to_writer_buffered(self, writer, value)
+    }
+
+    #[inline]
+    fn to_buffer(&self, value: &$T) -> Result<Vec<u8>, Self::FormatError> {
+      $Format::to_buffer(self, value)
+    }
+  );
+}
+
+macro_rules! impl_file_format_utf8_delegate_methods {
+  ($Format:ident, $T:ident) => (
+    fn from_string_buffer(&self, buf: &str) -> Result<$T, Self::FormatError> {
+      $Format::from_string_buffer(self, buf)
+    }
+
+    fn to_string_buffer(&self, value: &$T) -> Result<String, Self::FormatError> {
+      $Format::to_string_buffer(self, value)
+    }
+  );
+}
+
 macro_rules! impl_file_format_delegate {
   (<$Format:ident> $Type:ty) => (
     impl<T, $Format: FileFormat<T>> FileFormat<T> for $Type {
-      type FormatError = <$Format as FileFormat<T>>::FormatError;
-
-      #[inline]
-      fn from_reader_buffered<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
-        $Format::from_reader_buffered(self, reader)
-      }
-
-      #[inline]
-      fn from_reader<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
-        $Format::from_reader(self, reader)
-      }
-
-      #[inline]
-      fn from_buffer(&self, buf: &[u8]) -> Result<T, Self::FormatError> {
-        $Format::from_buffer(self, buf)
-      }
-
-      #[inline]
-      fn to_writer<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
-        $Format::to_writer(self, writer, value)
-      }
-
-      #[inline]
-      fn to_writer_buffered<W: Write>(&self, writer: W, value: &T) -> Result<(), Self::FormatError> {
-        $Format::to_writer_buffered(self, writer, value)
-      }
-
-      #[inline]
-      fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
-        $Format::to_buffer(self, value)
-      }
+      impl_file_format_delegate_methods!($Format, T);
     }
 
     impl<T, $Format: FileFormatUtf8<T>> FileFormatUtf8<T> for $Type {
-      fn from_string_buffer(&self, buf: &str) -> Result<T, Self::FormatError> {
-        $Format::from_string_buffer(self, buf)
-      }
-
-      fn to_string_buffer(&self, value: &T) -> Result<String, Self::FormatError> {
-        $Format::to_string_buffer(self, value)
-      }
+      impl_file_format_utf8_delegate_methods!($Format, T);
     }
   );
 }
 
 impl_file_format_delegate!(<Format> &Format);
+impl_file_format_delegate!(<Format> &mut Format);
 impl_file_format_delegate!(<Format> std::boxed::Box<Format>);
 impl_file_format_delegate!(<Format> std::rc::Rc<Format>);
 impl_file_format_delegate!(<Format> std::sync::Arc<Format>);
+
+impl<T, F: FnOnce() -> Format, Format: FileFormat<T>> FileFormat<T> for std::cell::LazyCell<Format, F> {
+  impl_file_format_delegate_methods!(Format, T);
+}
+
+impl<T, F: FnOnce() -> Format, Format: FileFormatUtf8<T>> FileFormatUtf8<T> for std::cell::LazyCell<Format, F> {
+  impl_file_format_utf8_delegate_methods!(Format, T);
+}
+
+impl<T, F: FnOnce() -> Format, Format: FileFormat<T>> FileFormat<T> for std::sync::LazyLock<Format, F> {
+  impl_file_format_delegate_methods!(Format, T);
+}
+
+impl<T, F: FnOnce() -> Format, Format: FileFormatUtf8<T>> FileFormatUtf8<T> for std::sync::LazyLock<Format, F> {
+  impl_file_format_utf8_delegate_methods!(Format, T);
+}
