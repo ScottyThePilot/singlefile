@@ -11,7 +11,8 @@ rust-version = "1.88"
 
 [dependencies]
 base64 = { version = "0.22.1", optional = true }
-bincode = { version = "=2.0.1", default-features = false, features = ["std"], optional = true }
+bincode1 = { version = "=1.3.3", package = "bincode", optional = true }
+bincode2 = { version = "=2.0.1", package = "bincode", default-features = false, features = ["std"], optional = true }
 bincode_reloaded = { version = "3.1.25", default-features = false, features = ["std"], optional = true }
 bzip2 = { version = "0.6.1", optional = true }
 ciborium = { version = "0.2.2", optional = true }
@@ -39,8 +40,9 @@ utils-serde = ["dep:serde"]
 
 # data formats
 base64 = ["dep:base64"]
-bincode = ["dep:bincode"]
-bincode-serde = ["bincode", "dep:serde", "bincode/serde"]
+bincode1 = ["dep:bincode1", "dep:serde"]
+bincode2 = ["dep:bincode2"]
+bincode2-serde = ["bincode2", "dep:serde", "bincode2/serde"]
 bincode-reloaded = ["dep:bincode_reloaded"]
 bincode-reloaded-serde = ["bincode-reloaded", "dep:serde", "bincode_reloaded/serde"]
 cbor-serde = ["dep:ciborium", "dep:serde"]

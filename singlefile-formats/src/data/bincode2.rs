@@ -1,16 +1,16 @@
-#![cfg_attr(docsrs, doc(cfg(feature = "bincode")))]
-#![cfg(feature = "bincode")]
+#![cfg_attr(docsrs, doc(cfg(feature = "bincode2")))]
+#![cfg(feature = "bincode2")]
 
 //! Defines a [`FileFormat`] using the Bincode binary data format.
 
-pub extern crate bincode as original;
+pub extern crate bincode2 as original;
 
-use bincode::{Decode, Encode};
-use bincode::config::{Configuration, Config, BigEndian, LittleEndian, Varint, Fixint, Limit, NoLimit};
-use bincode::error::{DecodeError, EncodeError};
-#[cfg(feature = "bincode-serde")]
+use bincode2::{Decode, Encode};
+use bincode2::config::{Configuration, Config, BigEndian, LittleEndian, Varint, Fixint, Limit, NoLimit};
+use bincode2::error::{DecodeError, EncodeError};
+#[cfg(feature = "bincode2-serde")]
 use serde::ser::Serialize;
-#[cfg(feature = "bincode-serde")]
+#[cfg(feature = "bincode2-serde")]
 use serde::de::DeserializeOwned;
 use singlefile::FileFormat;
 use thiserror::Error;
@@ -43,23 +43,23 @@ where T: Decode<()> + Encode, Configuration<E, I, L>: Config {
 
   #[inline]
   fn from_reader<R: Read>(&self, mut reader: R) -> Result<T, Self::FormatError> {
-    Ok(bincode::decode_from_std_read(&mut reader, self.configuration)?)
+    Ok(bincode2::decode_from_std_read(&mut reader, self.configuration)?)
   }
 
   #[inline]
   fn from_buffer(&self, buf: &[u8]) -> Result<T, Self::FormatError> {
-    Ok(bincode::decode_from_slice(buf, self.configuration)?.0)
+    Ok(bincode2::decode_from_slice(buf, self.configuration)?.0)
   }
 
   #[inline]
   fn to_writer<W: Write>(&self, mut writer: W, value: &T) -> Result<(), Self::FormatError> {
-    bincode::encode_into_std_write(value, &mut writer, self.configuration)?;
+    bincode2::encode_into_std_write(value, &mut writer, self.configuration)?;
     Ok(())
   }
 
   #[inline]
   fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
-    Ok(bincode::encode_to_vec(value, self.configuration)?)
+    Ok(bincode2::encode_to_vec(value, self.configuration)?)
   }
 }
 
@@ -122,41 +122,41 @@ impl<E, I, L> Bincode<E, I, L> {
 /// A [`FileFormat`] corresponding to the CBOR binary data format.
 /// Implemented using the [`ciborium`] crate, only compatible with types that implement
 /// [`Decode`] and [`Encode`].
-#[cfg(feature = "bincode-serde")]
+#[cfg(feature = "bincode2-serde")]
 #[derive(Debug, Clone, Copy, Default)]
 pub struct BincodeSerde<E = LittleEndian, I = Varint, L = NoLimit> {
   /// The internal [`Configuration`].
   pub configuration: Configuration<E, I, L>
 }
 
-#[cfg(feature = "bincode-serde")]
+#[cfg(feature = "bincode2-serde")]
 impl<T, E, I, L> FileFormat<T> for BincodeSerde<E, I, L>
 where T: DeserializeOwned + Serialize, Configuration<E, I, L>: Config {
   type FormatError = BincodeError;
 
   #[inline]
   fn from_reader<R: Read>(&self, mut reader: R) -> Result<T, Self::FormatError> {
-    Ok(bincode::serde::decode_from_std_read(&mut reader, self.configuration)?)
+    Ok(bincode2::serde::decode_from_std_read(&mut reader, self.configuration)?)
   }
 
   #[inline]
   fn from_buffer(&self, buf: &[u8]) -> Result<T, Self::FormatError> {
-    Ok(bincode::serde::decode_from_slice(buf, self.configuration)?.0)
+    Ok(bincode2::serde::decode_from_slice(buf, self.configuration)?.0)
   }
 
   #[inline]
   fn to_writer<W: Write>(&self, mut writer: W, value: &T) -> Result<(), Self::FormatError> {
-    bincode::serde::encode_into_std_write(value, &mut writer, self.configuration)?;
+    bincode2::serde::encode_into_std_write(value, &mut writer, self.configuration)?;
     Ok(())
   }
 
   #[inline]
   fn to_buffer(&self, value: &T) -> Result<Vec<u8>, Self::FormatError> {
-    Ok(bincode::serde::encode_to_vec(value, self.configuration)?)
+    Ok(bincode2::serde::encode_to_vec(value, self.configuration)?)
   }
 }
 
-#[cfg(feature = "bincode-serde")]
+#[cfg(feature = "bincode2-serde")]
 impl<E, I, L> BincodeSerde<E, I, L> {
   /// Creates a new [`Bincode`] given a [`Configuration`].
   #[inline]
@@ -222,7 +222,7 @@ pub type CompressedBincode<C, E = LittleEndian, I = Varint, L = NoLimit>
 
 /// A shortcut type to a [`Compressed`][crate::compression::Compressed] [`BincodeSerde`].
 /// Provides a single parameter for compression format.
-#[cfg_attr(docsrs, doc(cfg(all(feature = "compression", feature = "bincode-serde"))))]
-#[cfg(all(feature = "compression", feature = "bincode-serde"))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "compression", feature = "bincode2-serde"))))]
+#[cfg(all(feature = "compression", feature = "bincode2-serde"))]
 pub type CompressedBincodeSerde<C, E = LittleEndian, I = Varint, L = NoLimit>
   = crate::compression::Compressed<C, Bincode<E, I, L>>;

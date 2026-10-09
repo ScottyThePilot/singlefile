@@ -1,7 +1,8 @@
 //! Provides a number of data formats as [`FileFormat`][singlefile::FileFormat]s.
 
 pub mod base64;
-pub mod bincode;
+pub mod bincode1;
+pub mod bincode2;
 pub mod bincode_reloaded;
 pub mod cbor_serde;
 pub mod json_serde;

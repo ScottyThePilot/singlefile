@@ -4,30 +4,24 @@
 //! ## Features
 //! By default, no features are enabled.
 //!
-//! - `bincode`: Enables the [`Bincode`] file format.
-//! - `bincode-serde`: Enables the [`BincodeSerde`] file format for use with [`serde`] types.
-//! - `cbor-serde`: Enables the [`Cbor`] file format for use with [`serde`] types.
-//! - `json-serde`: Enables the [`Json`] file format for use with [`serde`] types.
-//! - `ron-serde`: Enables the [`Ron`] file format for use with [`serde`] types.
-//! - `toml-serde`: Enables the [`Toml`] file format for use with [`serde`] types.
-//! - `bzip`: Enables the [`BZip2`] compression format. See [`CompressionFormat`] for more info.
+//! - `base64`: Enables the [`Base64`][crate::data::base64::Base64] file format.
+//! - `bincode1`: Enables the [`Bincode`][crate::data::bincode1::Bincode] file format.
+//! - `bincode2`: Enables the [`Bincode`][crate::data::bincode2::Bincode] file format.
+//! - `bincode2-serde`: Enables the [`BincodeSerde`][crate::data::bincode2::BincodeSerde] file format for use with [`serde`] types.
+//! - `bincode-reloaded`: Enables the [`Bincode`][crate::data::bincode_reloaded::Bincode] file format.
+//! - `bincode-reloaded-serde`: Enables the [`BincodeSerde`][crate::data::bincode_reloaded::BincodeSerde] file format for use with [`serde`] types.
+//! - `cbor-serde`: Enables the [`Cbor`][crate::data::cbor_serde::Cbor] file format for use with [`serde`] types.
+//! - `json-serde`: Enables the [`Json`][crate::data::json_serde::Json] file format for use with [`serde`] types.
+//! - `ron-serde`: Enables the [`Ron`][crate::data::ron_serde::Ron] file format for use with [`serde`] types.
+//! - `toml-serde`: Enables the [`Toml`][crate::data::toml_serde::Toml] file format for use with [`serde`] types.
+//! - `bzip`: Enables the [`BZip2`][crate::compression::bzip::BZip2] compression format. See [`CompressionFormat`] for more info.
 //! - `bzip-rust`: Enables the `libbz2-rs-sys` feature for `bzip2`.
-//! - `flate`: Enables the [`Deflate`], [`Gz`], and [`ZLib`] compression formats. See [`CompressionFormat`] for more info.
-//! - `xz`: Enables the [`Xz`] compression format. See [`CompressionFormat`] for more info.
+//! - `flate`: Enables the [`Deflate`][crate::compression::flate::Deflate], [`Gz`][crate::compression::flate::Gz], and
+//!   [`ZLib`][crate::compression::flate::ZLib] compression formats. See [`CompressionFormat`] for more info.
+//! - `xz`: Enables the [`Xz`][crate::compression::xz::Xz] compression format. See [`CompressionFormat`] for more info.
 //!
 //! [`FileFormat`]: singlefile::FileFormat
-//! [`Bincode`]: crate::data::bincode::Bincode
-//! [`BincodeSerde`]: crate::data::bincode::BincodeSerde
-//! [`Cbor`]: crate::data::cbor_serde::Cbor
-//! [`Json`]: crate::data::json_serde::Json
-//! [`Ron`]: crate::data::ron_serde::Ron
-//! [`Toml`]: crate::data::toml_serde::Toml
 //! [`CompressionFormat`]: crate::compression::CompressionFormat
-//! [`BZip2`]: crate::compression::bzip::BZip2
-//! [`Deflate`]: crate::compression::flate::Deflate
-//! [`Gz`]: crate::compression::flate::Gz
-//! [`ZLib`]: crate::compression::flate::ZLib
-//! [`Xz`]: crate::compression::xz::Xz
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
