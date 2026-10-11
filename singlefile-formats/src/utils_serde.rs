@@ -19,14 +19,14 @@ pub trait FormatAdapter<T> {
   type Format: FileFormat<T>;
 
   /// The [`FileFormat`] that will be used for serializing and deserializing values.
-  const FORMAT: Self::Format;
+  fn format() -> Self::Format;
 
   /// Serializes the given value using the adapter's designated [`FileFormat`].
   ///
   /// This function may be used in `serde_derive`'s `#[serde(serialize_with = "...")]` attribute.
   fn serialize<S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
   where S: Serializer {
-    Self::FORMAT.to_buffer(value)
+    Self::format().to_buffer(value)
       .map_err(serde::ser::Error::custom)
       .and_then(|buf| buf.serialize(serializer))
   }
@@ -37,7 +37,7 @@ pub trait FormatAdapter<T> {
   fn deserialize<'de, D>(deserializer: D) -> Result<T, D::Error>
   where D: Deserializer<'de> {
     <Vec<u8>>::deserialize(deserializer).and_then(|buf| {
-      Self::FORMAT.from_buffer(&buf).map_err(serde::de::Error::custom)
+      Self::format().from_buffer(&buf).map_err(serde::de::Error::custom)
     })
   }
 }
@@ -52,14 +52,14 @@ pub trait FormatAdapterText<T> {
   type Format: FileFormatText<T>;
 
   /// The [`FileFormatText`] that will be used for serializing and deserializing values.
-  const FORMAT: Self::Format;
+  fn format() -> Self::Format;
 
   /// Serializes the given value using the adapter's designated [`FileFormatText`].
   ///
   /// This function may be used in `serde_derive`'s `#[serde(serialize_with = "...")]` attribute.
   fn serialize<S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
   where S: Serializer {
-    Self::FORMAT.to_string_buffer(value)
+    Self::format().to_string_buffer(value)
       .map_err(serde::ser::Error::custom)
       .and_then(|buf| buf.serialize(serializer))
   }
@@ -70,7 +70,7 @@ pub trait FormatAdapterText<T> {
   fn deserialize<'de, D>(deserializer: D) -> Result<T, D::Error>
   where D: Deserializer<'de> {
     <String>::deserialize(deserializer).and_then(|buf| {
-      Self::FORMAT.from_string_buffer(&buf).map_err(serde::de::Error::custom)
+      Self::format().from_string_buffer(&buf).map_err(serde::de::Error::custom)
     })
   }
 }
