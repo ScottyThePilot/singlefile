@@ -6,7 +6,7 @@
 pub extern crate bincode_reloaded as original;
 
 use bincode_reloaded::{Decode, Encode};
-use bincode_reloaded::config::{Configuration, Config, BigEndian, LittleEndian, Varint, Fixint, Limit, NoLimit};
+use bincode_reloaded::config::{Configuration, Config, BigEndian, LittleEndian, Varint, Fixint, Limit, NoLimit, standard, legacy};
 use bincode_reloaded::error::{DecodeError, EncodeError};
 #[cfg(feature = "bincode-reloaded-serde")]
 use serde::ser::Serialize;
@@ -15,7 +15,7 @@ use serde::de::DeserializeOwned;
 use singlefile::FileFormat;
 use thiserror::Error;
 
-use std::io::{Read, Write};
+use std::io::{BufReader, Read, Write};
 
 /// An error that can occur while using [`Bincode`].
 #[derive(Debug, Error)]
@@ -46,6 +46,11 @@ where T: Decode<()> + Encode, Configuration<E, I, L>: Config {
   #[inline]
   fn from_reader<R: Read>(&self, mut reader: R) -> Result<T, Self::FormatError> {
     Ok(bincode_reloaded::decode_from_std_read(&mut reader, self.configuration)?)
+  }
+
+  #[inline]
+  fn from_reader_buffered<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
+    Ok(bincode_reloaded::decode_from_reader(BufReader::new(reader), self.configuration)?)
   }
 
   #[inline]
@@ -119,6 +124,22 @@ impl<E, I, L> Bincode<E, I, L> {
   pub const fn with_no_limit(self) -> Bincode<E, I, NoLimit> {
     Bincode { configuration: self.configuration.with_no_limit() }
   }
+
+  /// Convert this [`Bincode`] into an equivalent [`BincodeSerde`].
+  #[cfg(feature = "bincode-reloaded-serde")]
+  pub const fn into_bincode_serde(self) -> BincodeSerde<E, I, L> {
+    BincodeSerde { configuration: self.configuration }
+  }
+}
+
+impl Bincode {
+  /// A [`Bincode`] corresponding to the [`standard`] [`Configuration`].
+  pub const STANDARD: Self = Bincode::new(standard());
+}
+
+impl Bincode<LittleEndian, Fixint, NoLimit> {
+  /// A [`Bincode`] corresponding to the [`legacy`] [`Configuration`].
+  pub const LEGACY: Self = Bincode::new(legacy());
 }
 
 /// A [`FileFormat`] corresponding to the CBOR binary data format.
@@ -141,6 +162,11 @@ where T: DeserializeOwned + Serialize, Configuration<E, I, L>: Config {
   #[inline]
   fn from_reader<R: Read>(&self, mut reader: R) -> Result<T, Self::FormatError> {
     Ok(bincode_reloaded::serde::decode_from_std_read(&mut reader, self.configuration)?)
+  }
+
+  #[inline]
+  fn from_reader_buffered<R: Read>(&self, reader: R) -> Result<T, Self::FormatError> {
+    Ok(bincode_reloaded::serde::decode_from_reader(BufReader::new(reader), self.configuration)?)
   }
 
   #[inline]
@@ -214,5 +240,38 @@ impl<E, I, L> BincodeSerde<E, I, L> {
   #[inline]
   pub const fn with_no_limit(self) -> BincodeSerde<E, I, NoLimit> {
     BincodeSerde { configuration: self.configuration.with_no_limit() }
+  }
+
+  /// Convert this [`BincodeSerde`] into an equivalent [`Bincode`].
+  pub const fn into_bincode(self) -> Bincode<E, I, L> {
+    Bincode { configuration: self.configuration }
+  }
+}
+
+#[cfg(feature = "bincode-reloaded-serde")]
+impl BincodeSerde {
+  /// A [`BincodeSerde`] corresponding to the [`standard`] [`Configuration`].
+  pub const STANDARD: Self = BincodeSerde::new(standard());
+}
+
+#[cfg(feature = "bincode-reloaded-serde")]
+impl BincodeSerde<LittleEndian, Fixint, NoLimit> {
+  /// A [`BincodeSerde`] corresponding to the [`legacy`] [`Configuration`].
+  pub const LEGACY: Self = BincodeSerde::new(legacy());
+}
+
+
+
+#[cfg(feature = "bincode-reloaded-serde")]
+impl<E, I, L> From<BincodeSerde<E, I, L>> for Bincode<E, I, L> {
+  fn from(value: BincodeSerde<E, I, L>) -> Self {
+    value.into_bincode()
+  }
+}
+
+#[cfg(feature = "bincode-reloaded-serde")]
+impl<E, I, L> From<Bincode<E, I, L>> for BincodeSerde<E, I, L> {
+  fn from(value: Bincode<E, I, L>) -> Self {
+    value.into_bincode_serde()
   }
 }
