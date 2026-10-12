@@ -5,7 +5,7 @@
 //! By default, only the `compression` feature is enabled.
 //!
 //! - `compression`: Enables the [`compression`] module. Enabled by default.
-//! - `utils-serde`: Enables the [`utils_serde`] module.
+//! - `utils-serde`: Enables the [`utils::serde`] module.
 //! - `base64`: Enables the [`Base64`][crate::data::base64::Base64] file format.
 //! - `bincode1`: Enables the [`Bincode`][crate::data::bincode1::Bincode] file format.
 //! - `bincode2`: Enables the [`Bincode`][crate::data::bincode2::Bincode] file format.
@@ -42,4 +42,4 @@ pub extern crate singlefile;
 
 pub mod compression;
 pub mod data;
-pub mod utils_serde;
+pub mod utils;
