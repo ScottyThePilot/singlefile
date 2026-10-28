@@ -2,9 +2,8 @@
 //! for use within [`singlefile`](https://crates.io/crates/singlefile).
 //!
 //! ## Features
-//! By default, only the `compression` feature is enabled.
+//! By default, no features are enabled.
 //!
-//! - `compression`: Enables the [`compression`] module. Enabled by default.
 //! - `utils-serde`: Enables the [`utils::serde`] module.
 //! - `base64`: Enables the [`Base64`][crate::data::base64::Base64] file format.
 //! - `bincode1`: Enables the [`Bincode`][crate::data::bincode1::Bincode] file format.

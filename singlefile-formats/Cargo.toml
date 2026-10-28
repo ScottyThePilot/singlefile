@@ -35,8 +35,7 @@ default-features = false
 version = "2.0"
 
 [features]
-default = ["compression"]
-compression = []
+default = []
 utils-serde = ["dep:serde"]
 
 # data formats
@@ -64,9 +63,9 @@ ron-unicode-segmentation = ["ron?/unicode-segmentation"]
 toml-preserve-order = ["toml?/preserve_order"]
 
 # compression formats
-bzip = ["compression", "dep:bzip2"]
-flate = ["compression", "dep:flate2"]
-xz = ["compression", "dep:xz2"]
+bzip = ["dep:bzip2"]
+flate = ["dep:flate2"]
+xz = ["dep:xz2"]
 
 [package.metadata.docs.rs]
 all-features = true

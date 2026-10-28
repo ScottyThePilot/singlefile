@@ -6,9 +6,8 @@ This library provides a number of default `FileFormat` implementations
 for use within [`singlefile`](https://crates.io/crates/singlefile).
 
 ## Features
-By default, only the `compression` feature is enabled.
+By default, no features are enabled.
 
-- `compression`: Enables the `compression` module. Enabled by default.
 - `utils-serde`: Enables the `utils_serde` module.
 - `base64`: Enables the `Base64` file format.
 - `bincode1`: Enables the `Bincode` file format.
