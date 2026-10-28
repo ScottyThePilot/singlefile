@@ -16,6 +16,7 @@ By default, only the `compression` feature is enabled.
 - `bincode2-serde`: Enables the `BincodeSerde` file format for use with `serde` types.
 - `bincode-reloaded`: Enables the `Bincode` file format.
 - `bincode-reloaded-serde`: Enables the `BincodeSerde` file format for use with `serde` types.
+- `borsh`: Enables the `Borsh` file format.
 - `cbor-serde`: Enables the `Cbor` file format for use with `serde` types.
 - `json-serde`: Enables the `Json` file format for use with `serde` types.
 - `ron-serde`: Enables the `Ron` file format for use with `serde` types.

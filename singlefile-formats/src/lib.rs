@@ -12,6 +12,7 @@
 //! - `bincode2-serde`: Enables the [`BincodeSerde`][crate::data::bincode2::BincodeSerde] file format for use with [`serde`] types.
 //! - `bincode-reloaded`: Enables the [`Bincode`][crate::data::bincode_reloaded::Bincode] file format.
 //! - `bincode-reloaded-serde`: Enables the [`BincodeSerde`][crate::data::bincode_reloaded::BincodeSerde] file format for use with [`serde`] types.
+//! - `borsh`: Enables the [`Borsh`][crate::data::borsh::Borsh] file format.
 //! - `cbor-serde`: Enables the [`Cbor`][crate::data::cbor_serde::Cbor] file format for use with [`serde`] types.
 //! - `json-serde`: Enables the [`Json`][crate::data::json_serde::Json] file format for use with [`serde`] types.
 //! - `ron-serde`: Enables the [`Ron`][crate::data::ron_serde::Ron] file format for use with [`serde`] types.
