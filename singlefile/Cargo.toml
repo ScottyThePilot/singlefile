@@ -60,6 +60,8 @@ fs-err2 = ["dep:fs-err2", "fs4/fs-err2"]
 fs-err3 = ["dep:fs-err3", "fs4/fs-err3"]
 # enables the `deadlock_detection` feature for parking_lot, if present
 deadlock-detection = ["parking_lot?/deadlock_detection"]
+# enables the `send_guard` feature for parking_lot, if present
+send-guard = ["parking_lot?/send_guard"]
 # enables the `parking_lot` feature for tokio, if present
 tokio-parking-lot = ["tokio?/parking_lot"]
 
