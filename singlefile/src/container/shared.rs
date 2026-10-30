@@ -34,6 +34,17 @@ pub type AtomicContainerShared<T, Format, Support> = ContainerShared<T, crate::m
 #[cfg(feature = "atomic")]
 pub type AtomicContainerSharedOptions<Support> = crate::manager::atomic::AtomicManagerOptions<Support>;
 
+/// Allows types to specify a 'default method' of constructing a [`ContainerShared`] for it, akin to [`Default`].
+pub trait InstantiateShared<Args>: Sized {
+  /// An error produced when attempting to create the [`ContainerShared`].
+  type Error;
+  /// The manager to use when creating the [`ContainerShared`].
+  type Manager: FileManager<Self>;
+
+  /// Creates the [`ContainerShared`].
+  fn instantiate(args: Args) -> Result<ContainerShared<Self, Self::Manager>, Self::Error>;
+}
+
 /// A container that allows synchronous atomic reference-counted, mutable access (gated by an [`RwLock`]) to the
 /// underlying file and contents. Cloning this container will not clone the underlying contents, it will clone the
 /// underlying pointer, allowing multiple-access.
@@ -127,6 +138,12 @@ impl<T, Manager> ContainerShared<T, Manager> {
   pub fn operate_mut<F, R>(&self, operation: F) -> R
   where F: FnOnce(&mut T) -> R {
     operation(&mut *self.access_mut())
+  }
+
+  /// Create a new [`Container`] given that `T` implements [`InstantiateShared`].
+  pub fn instantiate<Args>(args: Args) -> Result<Self, T::Error>
+  where T: InstantiateShared<Args, Manager = Manager> {
+    T::instantiate(args)
   }
 }
 

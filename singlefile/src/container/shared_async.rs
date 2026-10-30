@@ -38,6 +38,17 @@ macro_rules! spawn_blocking {
   ($expr:expr) => (tokio::task::spawn_blocking(move || $expr).await.expect("blocking task failed"));
 }
 
+/// Allows types to specify a 'default method' of constructing a [`ContainerSharedAsync`] for it, akin to [`Default`].
+pub trait InstantiateSharedAsync<Args>: Sized {
+  /// An error produced when attempting to create the [`ContainerSharedAsync`].
+  type Error;
+  /// The manager to use when creating the [`ContainerSharedAsync`].
+  type Manager: FileManager<Self>;
+
+  /// Creates the [`ContainerSharedAsync`].
+  fn instantiate(args: Args) -> impl Future<Output = Result<ContainerSharedAsync<Self, Self::Manager>, Self::Error>> + Send + Sync;
+}
+
 /// A container that allows asynchronous atomic reference-counted, mutable access (gated by an [`RwLock`]) to the
 /// underlying file and contents. Cloning this container will not clone the underlying contents, it will clone the
 /// underlying pointer, allowing multiple-access.
@@ -131,6 +142,12 @@ impl<T, Manager> ContainerSharedAsync<T, Manager> {
   pub async fn operate_mut<F, R>(&self, operation: F) -> R
   where F: AsyncFnOnce(&mut T) -> R {
     operation(&mut *self.access_mut().await).await
+  }
+
+  /// Create a new [`Container`] given that `T` implements [`InstantiateSharedAsync`].
+  pub async fn instantiate<Args>(args: Args) -> Result<Self, T::Error>
+  where T: InstantiateSharedAsync<Args, Manager = Manager> {
+    T::instantiate(args).await
   }
 }
 

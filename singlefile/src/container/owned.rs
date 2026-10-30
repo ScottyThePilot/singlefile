@@ -19,6 +19,17 @@ pub type AtomicContainer<T, Format, Support> = Container<T, crate::manager::atom
 #[cfg(feature = "atomic")]
 pub type AtomicContainerOptions<Support> = crate::manager::atomic::AtomicManagerOptions<Support>;
 
+/// Allows types to specify a 'default method' of constructing a [`Container`] for it, akin to [`Default`].
+pub trait Instantiate<Args>: Sized {
+  /// An error produced when attempting to create the [`Container`].
+  type Error;
+  /// The manager to use when creating the [`Container`].
+  type Manager: FileManager<Self>;
+
+  /// Creates the [`Container`].
+  fn instantiate(args: Args) -> Result<Container<Self, Self::Manager>, Self::Error>;
+}
+
 /// A basic owned container allowing managed access to some underlying file.
 #[derive(Debug)]
 pub struct Container<T, Manager> {
@@ -75,6 +86,12 @@ impl<T, Manager> Container<T, Manager> {
   #[inline(always)]
   pub const fn get_mut(&mut self) -> &mut T {
     &mut self.value
+  }
+
+  /// Create a new [`Container`] given that `T` implements [`Instantiate`].
+  pub fn instantiate<Args>(args: Args) -> Result<Self, T::Error>
+  where T: Instantiate<Args, Manager = Manager> {
+    T::instantiate(args)
   }
 }
 
